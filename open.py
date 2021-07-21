@@ -1,0 +1,3 @@
+from constants import *
+
+acceptCube()
