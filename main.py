@@ -460,7 +460,8 @@ def zbllHTest():
     newBase = cube.rotateTopValues(newBase)
     newBase = cube.rotateTopValues(newBase)
     print(cube.caseMatches(newBase, overall))
-    
+ 
+'''   
 def zbllTest():
     with open("casemap.js") as file:
         counter = 0
@@ -493,67 +494,7 @@ def zbllTest():
     print(cube1)
     cube1.solveTop()
     print(cube1)
-    
-                
-    '''
-    print(cube.errors)
-    print(len(cube.errors))
-    
-    goodCases = []
-    
-    with open("ZBLL-H.txt") as hFile:
-        lines = hFile.readlines()
-        lines = [line.strip() for line in lines]
-        
-        switch = True
-        for line in lines:
-            if switch:
-                if line not in cube.errors:
-                    goodCases.append(line)
-            switch = not switch
-            
-    print()
-    print(goodCases)
-    print(len(goodCases))
-    print(cube.goodOnes)
-    print(len(cube.goodOnes))
-    
-    finalCases = []
-    repeats = []
-    for x in cube.goodOnes.copy():
-        if x not in goodCases:
-            finalCases.append(x)
-        else:
-            repeats.append(x)
-            
-    print(finalCases)
-    print(len(finalCases))
-    print(repeats)
-    print(len(repeats))
-    
-    rotatedFinalCases = []
-    rotatedRepeats = []
-    
-    caseTest = finalCases[0]
-    print(caseTest)
-    caseTest = cube.rotateTopValues(finalCases[0])
-    caseTest = cube.rotateTopValues(caseTest)
-    print(caseTest)
-    
-    for case in finalCases:
-        newCase = cube.rotateTopValues(case)
-        newCase = cube.rotateTopValues(newCase)
-        if newCase not in goodCases:
-            rotatedFinalCases.append(case)
-        else:
-            rotatedRepeats.append(case)
-            
-    print(rotatedFinalCases)
-    print(len(rotatedFinalCases))
-    print(rotatedRepeats)
-    print(len(rotatedRepeats))
-    '''
-        
+'''     
                     
 def lastRotationTest():
     cube = Cube()
