@@ -475,14 +475,14 @@ def zbllTest():
                 cube.rotations(scramble)
                 # cube.moves = ""
                 cube.solveTop()
-                '''
+                
                 if not cube.isSolved():
                     print("Failed: " + str(scramble))
                     print(cube)
                     print(cube.moves)
                 
                 else:
-                '''
+                
                 print(".",end="")
                 counter += 1
         print(counter)
