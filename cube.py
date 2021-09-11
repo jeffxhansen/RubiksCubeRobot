@@ -1397,7 +1397,8 @@ class Cube:
         case = ""
         algorithm = ""
         with open(fileName) as file:
-            while line := file.readline().strip():
+            line = file.readline()
+            while line:
                 if isCase:
                     case = line
                     if self.caseMatches(case, overallValues):
@@ -1405,6 +1406,7 @@ class Cube:
                         finished = True
                         break
                 isCase = not isCase
+                line = file.readline()
 
             # special case with ZBLL-H where you have to rotate U2
             if finished == False:
