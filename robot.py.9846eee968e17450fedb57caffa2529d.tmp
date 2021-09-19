@@ -50,10 +50,10 @@ MEDIUM = 0.2
 class Robot:
     
     MOTORS = [M1, M2, M3, M4, S1, S2, S3, S4]
-    DEFAULT_POSITIONS = [M1_INIT, M2_INIT, M3_INIT,
-                        M4_INIT, S1_INIT, S2_INIT, S3_INIT, S4_INIT]
-    ACTIVATED_POSITIONS = [M1_90, M2_90, M3_90,
-                        M4_90, S1_END, S2_END, S3_END, S4_END]
+DEFAULT_POSITIONS = [M1_INIT, M2_INIT, M3_INIT,
+                     M4_INIT, S1_INIT, S2_INIT, S3_INIT, S4_INIT]
+ACTIVATED_POSITIONS = [M1_90, M2_90, M3_90,
+                       M4_90, S1_END, S2_END, S3_END, S4_END]
     
     def __init__(self):
         self.servo = maestro.Controller('/dev/ttyAMA0')
