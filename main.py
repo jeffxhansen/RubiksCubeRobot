@@ -1,11 +1,11 @@
 
 from cube import Cube
+from robot import Robot
 
 import random
 import time
 
 # still in progress
-
 
 
 def badEdgesTest():
@@ -860,7 +860,7 @@ def getScramble(scrambleSize, sides=["L", "R", "U", "D", "F", "B"]):
 # twoByTwoTest()
 
 # fullTwoByTwoTest()
-solveTest()
+# solveTest()
 # lastEdgePermutationTest()
 # lastRotationTest()
 # debugSolveTest()

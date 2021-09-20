@@ -6,25 +6,25 @@ import maestro
 This section includes Constants that are used for the robot
 """
 
-M1 = 0  # gripper motor 1
-M2 = 1  # gripper motor 2
-M3 = 2  # gripper motor 3
-M4 = 3  # gripper motor 4
+G1 = 0  # gripper motor 1
+G2 = 1  # gripper motor 2
+G3 = 2  # gripper motor 3
+G4 = 3  # gripper motor 4
 
 S1 = 8  # slider motor 1
 S2 = 9  # slider motor 1
 S3 = 10  # slider motor 1
 S4 = 11  # slider motor 1
 
-M1_INIT = 3968  # gripper motor 1 default position
-M2_INIT = 4200  # gripper motor 2 default position
-M3_INIT = 4200  # gripper motor 3 default position
-M4_INIT = 3968  # gripper motor 4 default position
+G1_INIT = 3968  # gripper motor 1 default position
+G2_INIT = 4200  # gripper motor 2 default position
+G3_INIT = 4200  # gripper motor 3 default position
+G4_INIT = 3968  # gripper motor 4 default position
 
-M1_90 = 6600    # gripper motor 1 clockwise-rotated position
-M2_90 = 6800    # gripper motor 2 clockwise-rotated position
-M3_90 = 6900    # gripper motor 3 clockwise-rotated position
-M4_90 = 6900    # gripper motor 4 clockwise-rotated position
+G1_END = 6600    # gripper motor 1 clockwise-rotated position
+G2_END = 6800    # gripper motor 2 clockwise-rotated position
+G3_END = 6900    # gripper motor 3 clockwise-rotated position
+G4_END = 6900    # gripper motor 4 clockwise-rotated position
 
 S1_INIT = 3900  # slider motor 1 closed position
 S2_INIT = 4600  # slider motor 2 closed position
@@ -47,222 +47,121 @@ SLEEP = 0.4  # sleep value used inbetween different motor movements
 SHORT = 0.1
 MEDIUM = 0.2
 
+"""
+Simple class to represent a motor with properties of 
+id, initial position, end position, and type of motor 
+("G" for gripper or "S" for slidder)
+"""
+class Motor:
+    def __init__(self, id:int, init:int, end:int):
+        self.id = id
+        self.init = init
+        self.end = end
+        self.type = ""
+        if id < 4: 
+            self.type = "G"
+        else:
+            self.type = "S"
+        self.label = self.type + str(self.id%4+1)
+        
+    def __str__(self):
+        return "{}{}: id({}), init({}), end({})"\
+            .format(self.type, self.id % 4+1, self.id, self.init, self.end)
+            
+    def __repr__(self):
+        return "Motor({}, {}, {})"\
+            .format(self.id, self.init, self.end, self.type)
+
 class Robot:
     
-    MOTORS = [M1, M2, M3, M4, S1, S2, S3, S4]
-    DEFAULT_POSITIONS = [M1_INIT, M2_INIT, M3_INIT,
-                        M4_INIT, S1_INIT, S2_INIT, S3_INIT, S4_INIT]
-    ACTIVATED_POSITIONS = [M1_90, M2_90, M3_90,
-                        M4_90, S1_END, S2_END, S3_END, S4_END]
+    grippers = [Motor(G1, G1_INIT, G1_END),
+                Motor(G2, G2_INIT, G2_END),
+                Motor(G3, G3_INIT, G3_END),
+                Motor(G4, G4_INIT, G4_END)]
+    
+    sliders = [Motor(S1, S1_INIT, S1_END),
+               Motor(S2, S2_INIT, S2_END),
+               Motor(S3, S3_INIT, S3_END),
+               Motor(S4, S4_INIT, S4_END)]
+    
+    motors = [grippers.copy() + sliders.copy()]
     
     def __init__(self):
         self.servo = maestro.Controller('/dev/ttyAMA0')
-        pass
-    
-    def resetToDefault(self):
-        print("Reseting to default positions")
-        self.servo.setAccel(M1, ACCEL_NORMAL)
-        self.servo.setAccel(S1, ACCEL_NORMAL)
-        self.servo.setTarget(M1, M1_INIT)
-        self.servo.setTarget(S1, S1_INIT)
-        time.sleep(1)
-
-        self.servo.setAccel(M2, ACCEL_NORMAL)
-        self.servo.setAccel(S2, ACCEL_NORMAL)
-        self.servo.setTarget(M2, M2_INIT)
-        self.servo.setTarget(S2, S2_INIT)
-        time.sleep(1)
-
-        self.servo.setAccel(M3, ACCEL_NORMAL)
-        self.servo.setAccel(S3, ACCEL_NORMAL)
-        self.servo.setTarget(M3, M3_INIT)
-        self.servo.setTarget(S3, S3_INIT)
-        time.sleep(1)
-
-        self.servo.setAccel(M4, ACCEL_NORMAL)
-        self.servo.setAccel(S4, ACCEL_NORMAL)
-        self.servo.setTarget(M4, M4_INIT)
-        self.servo.setTarget(S4, S4_INIT)
-        time.sleep(1)
-
-    def setToClosed(self):
-        print("Setting to clsed position")
-
-        step = 5
-
-        increment1 = int((S1_END - S1_INIT)/step)
-        increment2 = int((S2_END - S2_INIT)/step)
-        increment3 = int((S3_END - S3_INIT)/step)
-        increment4 = int((S4_END - S4_INIT)/step)
-
-        a1 = int(S1_END)
-        a2 = int(S2_END)
-        a3 = int(S3_END)
-        a4 = int(S4_END)
-
-        self.servo.setTarget(M1, M1_INIT)
-        self.servo.setTarget(M2, M2_INIT)
-        self.servo.setTarget(M3, M3_INIT)
-        self.servo.setTarget(M4, M4_INIT)
-
-        for i in range(step):
-
-            self.servo.setTarget(S2, a2)
-            self.servo.setTarget(S4, a4)
-
-            a2 -= increment2
-            a4 -= increment4
-
-            if i == step-1:
-                self.servo.setTarget(S2, S2_INIT)
-                self.servo.setTarget(S4, S4_INIT)
-
-        time.sleep(1)
-
-        for i in range(step):
-
-            self.servo.setTarget(S1, a1)
-            self.servo.setTarget(S3, a3)
-
-            a1 -= increment1
-            a3 -= increment3
-
-            if i == step-1:
-                self.servo.setTarget(S1, S1_INIT)
-                self.servo.setTarget(S3, S3_INIT)
-
-        print(a1)
-        print(a2)
-        print(a3)
-        print(a4)
-
-    def setToOpen(self):
-        print("Setting to open position")
-
-        step = 5
-
-        increment1 = int((S1_END - S1_INIT)/step)
-        increment2 = int((S2_END - S2_INIT)/step)
-        increment3 = int((S3_END - S3_INIT)/step)
-        increment4 = int((S4_END - S4_INIT)/step)
-
-        a1 = int(S1_INIT)
-        a2 = int(S2_INIT)
-        a3 = int(S3_INIT)
-        a4 = int(S4_INIT)
-
-        self.servo.setAccel(M1, ACCEL_SLOW)
-        self.servo.setAccel(S1, ACCEL_SLOW)
-        self.servo.setAccel(M2, ACCEL_SLOW)
-        self.servo.setAccel(S2, ACCEL_SLOW)
-        self.servo.setAccel(M3, ACCEL_SLOW)
-        self.servo.setAccel(S3, ACCEL_SLOW)
-        self.servo.setAccel(M4, ACCEL_SLOW)
-        self.servo.setAccel(S4, ACCEL_SLOW)
-
-        for i in range(step):
-            self.servo.setTarget(S1, a1)
-            self.servo.setTarget(S2, a2)
-            self.servo.setTarget(S3, a3)
-            self.servo.setTarget(S4, a4)
-
-            a1 += increment1
-            a2 += increment2
-            a3 += increment3
-            a4 += increment4
-
-        self.servo.setTarget(M1, M1_INIT)
-        self.servo.setTarget(M2, M2_INIT)
-        self.servo.setTarget(M3, M3_INIT)
-        self.servo.setTarget(M4, M4_INIT)
-
-        print(a1)
-        print(a2)
-        print(a3)
-        print(a4)
-
+        # set each motor to a slow acceleration
+        for motor in self.motors:
+            self.setAcceleration(motor, ACCEL_SLOW)
+            
+    def __str__(self):
+        returnString = ""
+        
+        returnString += "DEFAULTS:\n"
+        for m in self.motors:
+            returnString += "  "
+            returnString += str(m)
+            returnString += "\n"
+        
+        returnString += "\nCURRENT:\n"
+        for m in self.motors:
+            returnString += "  "
+            returnString += m.label + " "
+            returnString += self.getPosition(m.id)
+            returnString += "\n"
+            
+    def setAcceleration(self, motor, value):
+        self.servo.setAccel(motor, value)
+        
+    def setPosition(self, motor, position):
+        self.servo.setTarget(motor, position)
+        
+    def getPosition(self, motor):
+        return self.servo.getPosition(motor)
 
     def tightenVertical(self):
-        self.servo.setTarget(S1, S1_INIT-1000)
-        self.servo.setTarget(S3, S3_INIT-1000)
-
+        self.setPosition(S1, S1_INIT-1000)
+        self.setPosition(S3, S3_INIT-1000)
 
     def loosenVertical(self):
-        self.servo.setTarget(S1, S1_INIT)
-        self.servo.setTarget(S3, S3_INIT)
-
+        self.setPosition(S1, S1_INIT)
+        self.setPosition(S3, S3_INIT)
 
     def tightenHorizontal(self):
-        self.servo.setTarget(S2, S2_INIT-1000)
-        self.servo.setTarget(S4, S4_INIT-1000)
+        self.setPosition(S2, S2_INIT-1000)
+        self.setPosition(S4, S4_INIT-1000)
 
     def loosenHorizontal(self):
-        self.servo.setTarget(S2, S2_INIT)
-        self.servo.setTarget(S4, S4_INIT)
-
-    def acceptCube(self):
-        time.sleep(2)
-        setToOpen()
-        time.sleep(SLEEP)
-        setToClosed()
-        time.sleep(SLEEP)
-
+        self.setPosition(S2, S2_INIT)
+        self.setPosition(S4, S4_INIT)
 
     # sets the robot to the default open position
     def defaultOpen(self):
         print("Setting robot to default open position")
 
-        # for simultaneous motor movoment, multiple motors take turns incrementing small amounts
-        # step determines the number of turns each motor takes (i.e number of iterations of the loop)
-        step = 5
+        STEP = 5
 
-        # increment values for each motor, used in the loop
-        increment1 = int((S1_END - S1_INIT)/step)
-        increment2 = int((S2_END - S2_INIT)/step)
-        increment3 = int((S3_END - S3_INIT)/step)
-        increment4 = int((S4_END - S4_INIT)/step)
+        # lists with the intermediate positions and how much to be incremented in between each
+        # intermediate position
+        positions = [int(s.end) for s in self.sliders]
+        increments = [int(abs(s.init-s.end)/STEP) for s in self.sliders]
 
-        # target position at the end of each iteration
-        position1 = int(S1_INIT)
-        position2 = int(S2_INIT)
-        position3 = int(S3_INIT)
-        position4 = int(S4_INIT)
-
-        # set each motor to a slow acceleration
-        self.servo.setAccel(M1, ACCEL_SLOW)
-        self.servo.setAccel(S1, ACCEL_SLOW)
-        self.servo.setAccel(M2, ACCEL_SLOW)
-        self.servo.setAccel(S2, ACCEL_SLOW)
-        self.servo.setAccel(M3, ACCEL_SLOW)
-        self.servo.setAccel(S3, ACCEL_SLOW)
-        self.servo.setAccel(M4, ACCEL_SLOW)
-        self.servo.setAccel(S4, ACCEL_SLOW)
-
-        # move all sliders out symultanesously
-        for i in range(step):
-            if i < step-1:
-                self.servo.setTarget(S1, position1)
-                self.servo.setTarget(S2, position2)
-                self.servo.setTarget(S3, position3)
-                self.servo.setTarget(S4, position4)
-
-                position1 += increment1
-                position2 += increment2
-                position3 += increment3
-                position4 += increment4
-            else: # if i == step-1, or the last iteration
-                self.servo.setTarget(S1, S1_END)
-                self.servo.setTarget(S2, S2_END)
-                self.servo.setTarget(S3, S3_END)
-                self.servo.setTarget(S4, S4_END)
+        for i in range(STEP):
+            if i < STEP-1:
+                # set each slider to the next intermediate position
+                for j, s in enumerate(self.sliders):
+                    self.setPosition(s.id, positions[j])
+                # increment the intermediate positions
+                positions = [val + increments[i] for i, val in enumerate(positions)]
+                
+            # if on the last step, just set to default end position
+            else:
+                for s in self.sliders:
+                    self.setPosition(s.id, s.end)
 
         time.sleep(SLEEP)
 
         # move gripppers to default positions
-        self.servo.setTarget(M1, M1_INIT)
-        self.servo.setTarget(M2, M2_INIT)
-        self.servo.setTarget(M3, M3_INIT)
-        self.servo.setTarget(M4, M4_INIT)
+        for g in self.grippers:
+            self.setPosition(g.id, g.init)
 
     # sets the robot to the default closed position
     def defaultClose(self):
@@ -270,56 +169,30 @@ class Robot:
 
         time.sleep(SLEEP)
 
-        # for simultaneous motor movoment, multiple motors take turns incrementing small amounts
-        # step determines the number of turns each motor takes (i.e number of iterations of the loop)
-        step = 5
+        STEP = 5
 
-        # increment values for each motor, used in the loop
-        increment1 = int((S1_END - S1_INIT)/step)
-        increment2 = int((S2_END - S2_INIT)/step)
-        increment3 = int((S3_END - S3_INIT)/step)
-        increment4 = int((S4_END - S4_INIT)/step)
+        # lists with the intermediate positions and how much to be incremented in between each
+        # intermediate position
+        positions = [int(s.init) for s in self.sliders]
+        increments = [int(abs(s.end-s.init)/STEP) for s in self.sliders]
 
-        # target position at the end of each iteration
-        position1 = int(S1_END)
-        position2 = int(S2_END)
-        position3 = int(S3_END)
-        position4 = int(S4_END)
+        # set movtors to default open position
+        for g in self.grippers:
+            self.setPosition(g.id, g.init)
+        time.sleep(SHORT)
 
-        self.servo.setTarget(M1, M1_INIT)
-        self.servo.setTarget(M2, M2_INIT)
-        self.servo.setTarget(M3, M3_INIT)
-        self.servo.setTarget(M4, M4_INIT)
-
-        for i in range(step):
-
-            self.servo.setTarget(S2, position2)
-            self.servo.setTarget(S4, position4)
-
-            position2 -= increment2
-            position4 -= increment4
-
-            if i == step-1:
-                self.servo.setTarget(S2, S2_INIT)
-                self.servo.setTarget(S4, S4_INIT)
-
-            time.sleep(SHORT)
-        
-        time.sleep(MEDIUM)
-
-        for i in range(step):
-
-            self.servo.setTarget(S1, position1)
-            self.servo.setTarget(S3, position3)
-
-            position1 -= increment1
-            position3 -= increment3
-
-            if i == step-1:
-                self.servo.setTarget(S1, S1_INIT)
-                self.servo.setTarget(S3, S3_INIT)
-            
-            time.sleep(SHORT)
+        # first does even motors then odd motors
+        for i in range(2):
+            # increments each motor STEP even number of times
+            for j in range(STEP):
+                for k, s in enumerate(self.sliders):
+                    if k % 2 == i: # if odd or even motor
+                        if j < STEP-1:
+                            self.setPosition(s.id, positions[k])
+                            positions[k] -= increments[k]
+                        else:
+                            self.setPosition(s.id, s.init)
+                        time.sleep(SHORT)
 
     def acceptCube(self):
         self.defaultOpen()
@@ -327,56 +200,37 @@ class Robot:
         self.defaultClose()
         time.sleep(SHORT)
 
-
     def inDefaultPosition(self, motor):
-        if motor == M1:
-            if self.servo.getPosition(motor) == M1_INIT:
-                return True
-        elif motor == M2:
-            if self.servo.getPosition(motor) == M2_INIT:
-                return True
-        elif motor == M3:
-            if self.servo.getPosition(motor) == M3_INIT:
-                return True
-        elif motor == M4:
-            if self.servo.getPosition(motor) == M4_INIT:
-                return True
-        elif motor == S1:
-            if self.servo.getPosition(motor) == S1_INIT:
-                return True
-        elif motor == S2:
-            if self.servo.getPosition(motor) == S2_INIT:
-                return True
-        elif motor == S3:
-            if self.servo.getPosition(motor) == S3_INIT:
-                return True
-        elif motor == S4:
-            if self.servo.getPosition(motor) == S4_INIT:
-                return True
-        else:
-            print("   provided wrong input in isInDefaultPosition():robot.py 117")
-            print("   argument: " + str(motor))
-
+        
+        for m, i in enumerate(self.motors):
+            if m == motor:
+                if self.servo.getPosition(motor) == self.DEFAULT_POSITIONS[i]:
+                    return True
+    
+        print("   provided wrong input in isInDefaultPosition():robot.py 117")
+        print("   argument: " + str(motor))
         return False
 
     def setMotorOff(self, motor):
         if not self.inDefaultPosition(motor):
-            for i in range(len(MOTORS)):
-                if MOTORS[i] == motor: 
-                    self.servo.setTarget(MOTORS[i], DEFAULT_POSITIONS[i])
+            for i in range(len(self.motors)):
+                if self.motors[i] == motor:
+                    self.setPosition(
+                        self.motors[i], self.DEFAULT_POSITIONS[i])
                     break
                 
 
     def setMotorOn(self, motor):
         if not self.inDefaultPosition(motor):
-            for i in range(len(MOTORS)):
-                if MOTORS[i] == motor:
-                    self.servo.setTarget(MOTORS[i], ACTIVATED_POSITIONS[i])
+            for i in range(len(self.motors)):
+                if self.motors[i] == motor:
+                    self.setPosition(
+                        self.motors[i], self.ACTIVATED_POSITIONS[i])
                     break
 
-    def setMotorsAcceleration(self, accel, list=MOTORS):
+    def setMotorsAcceleration(self, accel, list=motors):
         for m in list:
-            self.servo.setAccel(m, accel)
+            self.setAcceleration(m, accel)
             
     def prepare_UD(self, tighten:bool):
         """Prepares the U and D motors for a L/R rotation
@@ -438,7 +292,8 @@ class Robot:
         Parameters
         ----------
         side_command : str
-            the command that needs to be performed"""
+            the command that needs to be performed
+        """
         pass
 
     def parse_solution(self, algorithm:str):
