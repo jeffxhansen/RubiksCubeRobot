@@ -84,7 +84,7 @@ class Robot:
                Motor(S3, S3_INIT, S3_END),
                Motor(S4, S4_INIT, S4_END)]
     
-    motors = [grippers.copy() + sliders.copy()]
+    motors = grippers.copy() + sliders.copy()
     
     def __init__(self):
         self.servo = maestro.Controller('/dev/ttyAMA0')
@@ -105,17 +105,19 @@ class Robot:
         for m in self.motors:
             returnString += "  "
             returnString += m.label + " "
-            returnString += self.getPosition(m.id)
+            returnString += str(self.getPosition(m))
             returnString += "\n"
             
-    def setAcceleration(self, motor, value):
-        self.servo.setAccel(motor, value)
+        return returnString
+            
+    def setAcceleration(self, motor:Motor, value):
+        self.servo.setAccel(motor.id, value)
         
-    def setPosition(self, motor, position):
-        self.servo.setTarget(motor, position)
+    def setPosition(self, motor:Motor, position):
+        self.servo.setTarget(motor.id, position)
         
-    def getPosition(self, motor):
-        return self.servo.getPosition(motor)
+    def getPosition(self, motor:Motor):
+        return self.servo.getPosition(motor.id)
 
     def tightenVertical(self):
         self.setPosition(S1, S1_INIT-1000)
@@ -148,20 +150,20 @@ class Robot:
             if i < STEP-1:
                 # set each slider to the next intermediate position
                 for j, s in enumerate(self.sliders):
-                    self.setPosition(s.id, positions[j])
+                    self.setPosition(s, positions[j])
                 # increment the intermediate positions
                 positions = [val + increments[i] for i, val in enumerate(positions)]
                 
             # if on the last step, just set to default end position
             else:
                 for s in self.sliders:
-                    self.setPosition(s.id, s.end)
+                    self.setPosition(s, s.end)
 
         time.sleep(SLEEP)
 
         # move gripppers to default positions
         for g in self.grippers:
-            self.setPosition(g.id, g.init)
+            self.setPosition(g, g.init)
 
     # sets the robot to the default closed position
     def defaultClose(self):
@@ -178,7 +180,7 @@ class Robot:
 
         # set movtors to default open position
         for g in self.grippers:
-            self.setPosition(g.id, g.init)
+            self.setPosition(g, g.init)
         time.sleep(SHORT)
 
         # first does even motors then odd motors
@@ -186,12 +188,12 @@ class Robot:
             # increments each motor STEP even number of times
             for j in range(STEP):
                 for k, s in enumerate(self.sliders):
-                    if k % 2 == i: # if odd or even motor
+                    if k % 2 != i: # if odd or even motor
                         if j < STEP-1:
-                            self.setPosition(s.id, positions[k])
+                            self.setPosition(s, positions[k])
                             positions[k] -= increments[k]
                         else:
-                            self.setPosition(s.id, s.init)
+                            self.setPosition(s, s.init)
                         time.sleep(SHORT)
 
     def acceptCube(self):

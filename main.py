@@ -7,6 +7,12 @@ import time
 
 # still in progress
 
+def robotToStringTest():
+    robot = Robot()
+    robot.defaultOpen()
+    
+robotToStringTest()
+
 
 def badEdgesTest():
     '''
