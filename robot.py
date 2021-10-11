@@ -17,19 +17,19 @@ S3 = 10  # slider motor 1
 S4 = 11  # slider motor 1
 
 G1_INIT = 3968  # gripper motor 1 default position
-G2_INIT = 4200  # gripper motor 2 default position
+G2_INIT = 6700  # gripper motor 2 default position
 G3_INIT = 4200  # gripper motor 3 default position
-G4_INIT = 3968  # gripper motor 4 default position
+G4_INIT = 6800  # gripper motor 4 default position
 
-G1_END = 6600    # gripper motor 1 clockwise-rotated position
-G2_END = 6800    # gripper motor 2 clockwise-rotated position
-G3_END = 6900    # gripper motor 3 clockwise-rotated position
-G4_END = 6900    # gripper motor 4 clockwise-rotated position
+G1_END = 6600   # gripper motor 1 clockwise-rotated position
+G2_END = 4200   # gripper motor 2 clockwise-rotated position
+G3_END = 6850   # gripper motor 3 clockwise-rotated position
+G4_END = 3968   # gripper motor 4 clockwise-rotated position
 
-S1_INIT = 3900  # slider motor 1 closed position
-S2_INIT = 4600  # slider motor 2 closed position
-S3_INIT = 4400  # slider motor 3 closed position
-S4_INIT = 3900  # slider motor 4 closed position
+S1_INIT = 4100  # slider motor 1 closed position
+S2_INIT = 4400  # slider motor 2 closed position
+S3_INIT = 4000  # slider motor 3 closed position
+S4_INIT = 3700  # slider motor 4 closed position
 
 S1_END = 9000  # slider motor 1 open position
 S2_END = 9000  # slider motor 2 open position
@@ -44,8 +44,8 @@ ACCEL_SLOW = 30     # self.servo acceleration rate slow
 ACCEL_NORMAL = 50   # self.servo acceleration rate normal
 
 SLEEP = 0.4  # sleep value used inbetween different motor movements
-SHORT = 0.1
-MEDIUM = 0.2
+SHORT = 0.2
+MEDIUM = 0.3
 
 """
 Simple class to represent a motor with properties of 
@@ -60,9 +60,10 @@ class Motor:
         self.type = ""
         if id < 4: 
             self.type = "G"
+            self.name = self.type + str((id % 4) + 1)
         else:
             self.type = "S"
-        self.label = self.type + str(self.id%4+1)
+            self.name = self.type + str((id % 4) + 1)
         
     def __str__(self):
         return "{}{}: id({}), init({}), end({})"\
@@ -84,6 +85,16 @@ class Robot:
                Motor(S3, S3_INIT, S3_END),
                Motor(S4, S4_INIT, S4_END)]
     
+    g1 = grippers[0]
+    g2 = grippers[1]
+    g3 = grippers[2]
+    g4 = grippers[3]
+    
+    s1 = sliders[0]
+    s2 = sliders[1]
+    s3 = sliders[2]
+    s4 = sliders[3]
+    
     motors = grippers.copy() + sliders.copy()
     
     def __init__(self):
@@ -104,7 +115,7 @@ class Robot:
         returnString += "\nCURRENT:\n"
         for m in self.motors:
             returnString += "  "
-            returnString += m.label + " "
+            returnString += m.name + " "
             returnString += str(self.getPosition(m))
             returnString += "\n"
             
@@ -118,22 +129,12 @@ class Robot:
         
     def getPosition(self, motor:Motor):
         return self.servo.getPosition(motor.id)
-
-    def tightenVertical(self):
-        self.setPosition(S1, S1_INIT-1000)
-        self.setPosition(S3, S3_INIT-1000)
-
-    def loosenVertical(self):
-        self.setPosition(S1, S1_INIT)
-        self.setPosition(S3, S3_INIT)
-
-    def tightenHorizontal(self):
-        self.setPosition(S2, S2_INIT-1000)
-        self.setPosition(S4, S4_INIT-1000)
-
-    def loosenHorizontal(self):
-        self.setPosition(S2, S2_INIT)
-        self.setPosition(S4, S4_INIT)
+    
+    def inDefault(self, motor:Motor):
+        current = self.getPosition(motor)
+        desired = motor.init
+        print(f"{motor.name} {current}-{desired}={abs(current - desired)}")
+        return abs(current - desired) < 100
 
     # sets the robot to the default open position
     def defaultOpen(self):
@@ -188,7 +189,7 @@ class Robot:
             # increments each motor STEP even number of times
             for j in range(STEP):
                 for k, s in enumerate(self.sliders):
-                    if k % 2 != i: # if odd or even motor
+                    if k % 2 == i: # if odd or even motor
                         if j < STEP-1:
                             self.setPosition(s, positions[k])
                             positions[k] -= increments[k]
@@ -198,7 +199,7 @@ class Robot:
 
     def acceptCube(self):
         self.defaultOpen()
-        time.sleep(SLEEP)
+        time.sleep(SLEEP*2)
         self.defaultClose()
         time.sleep(SHORT)
 
@@ -212,49 +213,17 @@ class Robot:
         print("   provided wrong input in isInDefaultPosition():robot.py 117")
         print("   argument: " + str(motor))
         return False
-
-    def setMotorOff(self, motor):
-        if not self.inDefaultPosition(motor):
-            for i in range(len(self.motors)):
-                if self.motors[i] == motor:
-                    self.setPosition(
-                        self.motors[i], self.DEFAULT_POSITIONS[i])
-                    break
-                
-
-    def setMotorOn(self, motor):
-        if not self.inDefaultPosition(motor):
-            for i in range(len(self.motors)):
-                if self.motors[i] == motor:
-                    self.setPosition(
-                        self.motors[i], self.ACTIVATED_POSITIONS[i])
-                    break
-
-    def setMotorsAcceleration(self, accel, list=motors):
-        for m in list:
-            self.setAcceleration(m, accel)
             
-    def prepare_UD(self, tighten:bool):
+    def prepare_UD(self):
         """Prepares the U and D motors for a L/R rotation
-        by either tightening its grip or comletely letting go
-        
-        Parameters
-        ----------
-        tighten : bool
-            determines whether to tighten or to loosen
+        by maving the U and D motors into the initial position
         """
-        pass
         
-    def prepare_LR(self, tighten:bool):
+        
+    def prepare_LR(self):
         """Prepares the L and R motors for a U/D rotation
-        by either tightening its grip or comletely letting go
-        
-        Parameters
-        ----------
-        tighten : bool
-            determines whether to tighten or to loosen
+        by maving the L and R motors into the initial position
         """
-        pass
             
     def translate_solution(self, solution:str,rotation_command:str):
         """Optimizes the amount of full cube rotations 
@@ -296,6 +265,24 @@ class Robot:
         side_command : str
             the command that needs to be performed
         """
+        if side_command == "F":
+            pass
+        elif side_command == "B":
+            pass
+        elif side_command == "L":
+            self.prepare_UD(True)
+            
+        elif side_command == "R":
+            pass
+        elif side_command == "U":
+            pass
+        elif side_command == "D":
+            pass
+        else:
+            raise ValueError(
+                "rotate_side command not valid {} prime({})".format(side_command, prime))
+        
+        
         pass
 
     def parse_solution(self, algorithm:str):
@@ -315,21 +302,27 @@ class Robot:
             
             if movement[0].lower():
                 if len(movement) == 1:
+                    # x y z
                     self.rotate_cube(movement, False)
                 else:
                     if movement[1] == "'":
+                        # x' y' z'
                         self.rotate_cube(movement, True)
                     elif movement[1] == "2":
                         for i in range(2):
+                            # x2 y2 z2
                             self.rotate_cube(movement, False)
             else:
                 if len(movement) == 1:
+                    # any normal side movement
                     self.rotate_side(movement, False)
                 else:
                     if movement[1] == "'":
+                        # any prime side movement
                         self.rotate_side(movement, True)
                     elif movement[1] == "2":
                         for i in range(2):
+                            # any side double movement
                             self.rotate_side(movement, False)
         
 

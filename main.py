@@ -10,8 +10,27 @@ import time
 def robotToStringTest():
     robot = Robot()
     robot.defaultOpen()
+    print(robot)
+    time.sleep(2)
+    robot.acceptCube()
+    time.sleep(2)
     
-robotToStringTest()
+def tempTests():
+    robot = Robot()
+    #robot.defaultOpen()
+    robot.defaultClose()
+    time.sleep(1)
+    print(robot)
+    for s in robot.sliders:
+        #robot.setPosition(s,s.init)
+        print(robot.inDefault(s))
+        #robot.setPosition(s,s.end)
+        
+    for g in robot.grippers:
+        print(robot.inDefault(g))
+    
+
+tempTests()
 
 
 def badEdgesTest():
