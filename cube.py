@@ -1581,5 +1581,7 @@ class Cube:
         self.solveLine()
         self.solveF2L()
         self.solveTop()
+        if self.moves[-1] == " ":
+            self.moves = self.moves[:-1]
         return self.moves
     

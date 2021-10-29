@@ -1,7 +1,7 @@
 
 import time
 
-from serial.serialposix import PlatformSpecificBase
+#from serial.serialposix import PlatformSpecificBase
 import maestro
 
 """
@@ -28,9 +28,9 @@ G2_END = 4200   # gripper motor 2 clockwise-rotated position
 G3_END = 6850   # gripper motor 3 clockwise-rotated position
 G4_END = 3968   # gripper motor 4 clockwise-rotated position
 
-S1_INIT = 4100  # slider motor 1 closed position
+S1_INIT = 4300  # slider motor 1 closed position
 S2_INIT = 4300  # slider motor 2 closed position
-S3_INIT = 4400  # slider motor 3 closed position
+S3_INIT = 4200  # slider motor 3 closed position
 S4_INIT = 4300  # slider motor 4 closed position
 
 S1_END = 9000  # slider motor 1 open position
@@ -197,7 +197,7 @@ class Robot:
 
     # sets the robot to the default open position
     def defaultOpen(self):
-        print("Setting robot to default open position")
+        print("\nSetting robot to default open position")
 
         self.openSliders()
         motors = [self.g1, self.g2, self.g3, self.g4]
@@ -207,7 +207,7 @@ class Robot:
 
     # sets the robot to the default closed position
     def defaultClose(self):
-        print("Setting robot to default closed position")
+        print("\nSetting robot to default closed position")
 
         motors = [self.g1, self.g2, self.g3, self.g4]
         for i, g in enumerate(motors):
@@ -323,7 +323,7 @@ class Robot:
             trans = oldTranslation[pattern[(i+increment)%4]]
             self.translation[curr] = trans
             
-        print(self.translation)
+        #print(self.translation)
         
     def rotate_z(self, prime):
         self.rotate_y(False)
@@ -471,7 +471,7 @@ class Robot:
         side_command : str
             the command that needs to be performed
         """
-        print("rotate_side: " + side_command)
+        #print("rotate_side: " + side_command)
         if side_command == "F":
             self.rotate_F(prime, double)
         elif side_command == "B":
@@ -517,9 +517,9 @@ class Robot:
         print(movements)
         
         for movement in movements:
-            print("parse_solution: " + movement, end=" : ")
+            #print("parse_solution: " + movement, end=" : ")
             movement = self.translation[movement[0]] + movement[1:]
-            print(movement)
+            print(movement, end=" ")
             if movement[0].islower():
                 if len(movement) == 1:
                     # x y z

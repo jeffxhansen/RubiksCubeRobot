@@ -154,7 +154,7 @@ def finalTest():
     
 #close()
 #quick()
-finalTest()
+#finalTest()
 #rotateZ()
 #scrambleUnScramble()
 #zigZag()
@@ -1043,3 +1043,24 @@ B' U2 B U' L2 F U F' L2 D L2 D' B2 U B2 U' L2 U U2
 '''
 
 #emergency()
+
+def doesItActuallyWork():
+    cube = Cube()
+    robot = Robot()
+    
+    robot.defaultOpen()
+    scramble = getScramble(10)
+    #scramble = "B' L2 F2 B2 D' B L' D2 R2 B'"
+    cube.rotations(scramble)
+    # B' L2 F2 B2 D' B L' D2 R2 B' 
+    print(cube)
+    print("[" + scramble + "]")
+    solution = cube.solution()
+    print("[" + solution + "]")
+    input("Ready?")
+    robot.acceptCube()
+    robot.parse_solution(solution)
+    robot.defaultOpen()
+    
+
+doesItActuallyWork()
