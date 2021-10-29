@@ -1562,6 +1562,18 @@ class Cube:
                 self.lastRotation()
 
             return self.isSolved()
+        
+    def reverseAlgorithm(self, algorithm):
+        movements = algorithm.split(" ")
+        movements = movements[::-1]
+        for i, movement in enumerate(movements):
+            if len(movement) == 2:
+                if movement[1] == "'":
+                    movements[i] = movement[:1]
+            else:
+                movements[i] = movement + "'"
+                
+        return " ".join(movements)
 
     def solution(self):
         self.moves = ""
@@ -1570,3 +1582,4 @@ class Cube:
         self.solveF2L()
         self.solveTop()
         return self.moves
+    

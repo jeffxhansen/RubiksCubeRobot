@@ -29,8 +29,143 @@ def tempTests():
     for g in robot.grippers:
         print(robot.inDefault(g))
     
+def testPrepareLR():
+    robot = Robot()
+    robot.acceptCube()
+    time.sleep(1)
+    robot.setPosition(robot.g2, robot.g2.end)
+    robot.setPosition(robot.g4, robot.g4.end)
+    time.sleep(0.4)
+    ss = [robot.s1, robot.s2, robot.s3, robot.s4]
+    for s in ss:
+        robot.setPosition(s, s.init)
+    time.sleep(1)
+        
+    robot.prepareHorizontal()
+    
+def testPrepareUD():
+    robot = Robot()
+    robot.acceptCube()
+    time.sleep(1)
+    robot.setPosition(robot.g1, robot.g1.end)
+    robot.setPosition(robot.g3, robot.g3.end)
+    time.sleep(0.4)
+    ss = [robot.s1, robot.s2, robot.s3, robot.s4]
+    for s in ss:
+        robot.setPosition(s, s.init)
+    time.sleep(1)
+        
+    robot.prepareVertical()
+    
+def leftMove():
+    robot = Robot()
+    robot.acceptCube()
+    robot.parse_solution("L L' L L'")
+    
+def rightMove():
+    robot = Robot()
+    robot.acceptCube()
+    robot.parse_solution("R R' R R'")
+    
+def zigZag():
+    robot = Robot()
+    robot.acceptCube()
+    for i in range(6):
+        robot.parse_solution("L R y")
+    robot.defaultOpen()
+    
+def movesTest():
+    robot = Robot()
+    robot.acceptCube()
+    for i in range(6):
+        robot.parse_solution("L R y")
+        
+def rotateCube():
+    robot = Robot()
+    robot.acceptCube()
+    robot.parse_solution("y'")
+    
+def translateSolution():
+    robot = Robot()
+    algorithm = "F B F B L U D"
+    print(algorithm)
+    print(robot.translate_solution("y",False))
+    
+def emergency():
+    robot = Robot()
+    robot.defaultOpen()
+    
+def changedAcceptCube():
+    robot = Robot()
+    robot.setPosition(robot.g1, robot.g1.end)
+    robot.setPosition(robot.s2, robot.g2.end)
+    robot.setPosition(robot.g3, robot.g3.end, True)
+    robot.defaultClose()
+    
+def tightenTest():
+    robot = Robot()
+    robot.defaultClose()
+    #robot.tightenHorizontal()
+    
+def rotateX():
+    robot = Robot()
+    robot.acceptCube()
+    robot.defaultClose()
+    robot.parse_solution("x")
+    robot.defaultClose()
+    robot.parse_solution("x'")
+    robot.defaultClose()
 
-tempTests()
+def scrambleUnScramble():
+    robot = Robot()
+    robot.acceptCube()
+    robot.parse_solution("R U L D R U L D D' L' U' R' D' L' U' R'")
+    robot.defaultClose()
+    robot.defaultOpen()
+    
+def rotateZ():
+    robot = Robot()
+    robot.acceptCube()
+    robot.parse_solution("z")
+    robot.defaultClose()
+    
+def quick():
+    robot = Robot()
+    robot.acceptCube()
+    finalAlgorithm = "x x' x x'"
+    robot.parse_solution(finalAlgorithm)  # L' B' F' L' B' F'
+    robot.defaultOpen()
+    
+def close():
+    robot = Robot()
+    robot.defaultClose()
+    
+def finalTest():
+    robot = Robot()
+    cube = Cube()
+    # "U L R' x U2 y R' U2 R U2 F R x' U'" #"y R' U2 R U2 F R"  # "y R' U2 R U2 F R"
+    algorithm = "U L R' x U2 y R' U2 R U2 F R x' U'"
+    reversed = cube.reverseAlgorithm(algorithm)
+    robot.acceptCube()
+    final = algorithm + " " + reversed
+    print(final)
+    input("start?")
+    robot.parse_solution(final)
+    
+#close()
+#quick()
+finalTest()
+#rotateZ()
+#scrambleUnScramble()
+#zigZag()
+#rotateX()
+#tightenTest()
+#changedAcceptCube()
+#translateSolution()
+#rotateCube()
+#movesTest()
+#testPrepareUD()
+# tempTests()
 
 
 def badEdgesTest():
@@ -906,3 +1041,5 @@ L' B R2 B' L' U F D2 F U' B2 U R2 B2 D F2 U U2
 31355132310203235303
 B' U2 B U' L2 F U F' L2 D L2 D' B2 U B2 U' L2 U U2
 '''
+
+#emergency()

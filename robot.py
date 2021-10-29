@@ -1,5 +1,7 @@
 
 import time
+
+from serial.serialposix import PlatformSpecificBase
 import maestro
 
 """
@@ -27,9 +29,9 @@ G3_END = 6850   # gripper motor 3 clockwise-rotated position
 G4_END = 3968   # gripper motor 4 clockwise-rotated position
 
 S1_INIT = 4100  # slider motor 1 closed position
-S2_INIT = 4400  # slider motor 2 closed position
-S3_INIT = 4000  # slider motor 3 closed position
-S4_INIT = 3700  # slider motor 4 closed position
+S2_INIT = 4300  # slider motor 2 closed position
+S3_INIT = 4400  # slider motor 3 closed position
+S4_INIT = 4300  # slider motor 4 closed position
 
 S1_END = 9000  # slider motor 1 open position
 S2_END = 9000  # slider motor 2 open position
@@ -42,10 +44,11 @@ NUM_MOTORS = 8
 
 ACCEL_SLOW = 30     # self.servo acceleration rate slow
 ACCEL_NORMAL = 50   # self.servo acceleration rate normal
+ACCEL_FAST = 70     # self.servo acceleration rate fast
 
-SLEEP = 0.4  # sleep value used inbetween different motor movements
-SHORT = 0.2
-MEDIUM = 0.3
+SLEEP = 0.6  # sleep value used inbetween different motor movements
+SHORT = 0.3
+MEDIUM = 0.4
 
 """
 Simple class to represent a motor with properties of 
@@ -101,7 +104,11 @@ class Robot:
         self.servo = maestro.Controller('/dev/ttyAMA0')
         # set each motor to a slow acceleration
         for motor in self.motors:
-            self.setAcceleration(motor, ACCEL_SLOW)
+            self.setAcceleration(motor, ACCEL_FAST)
+            
+        self.translation = {"L": "L", "R": "R", "B": "B",
+                            "U": "U", "D": "D", "F": "F",
+                            "x": "x", "y": "y", "z": "z"}
             
     def __str__(self):
         returnString = ""
@@ -124,8 +131,60 @@ class Robot:
     def setAcceleration(self, motor:Motor, value):
         self.servo.setAccel(motor.id, value)
         
-    def setPosition(self, motor:Motor, position):
+    def setPosition(self, motor:Motor, position, pause=True):
         self.servo.setTarget(motor.id, position)
+        if pause:
+            time.sleep(MEDIUM)
+            
+    def crashCheck(self, slider:Motor):
+        sIndex = self.sliders.index(slider)
+        sGripper = self.grippers[sIndex]
+        g1 = self.grippers[(sIndex - 1) % 4]
+        g2 = self.grippers[(sIndex + 1) % 4]
+        gBad = (self.getPosition(sGripper) == sGripper.end)
+        
+        if gBad:
+            if self.getPosition(g1) == g1.end:
+                print(f"Saving crash of g1:{g1}")
+                self.moveGripper(g1, g1.init)
+            if self.getPosition(g2) == g2.end:
+                print(f"Saving crash of g2:{g2}")
+                self.moveGripper(g2, g2.init)
+            
+    def moveSlider(self, motor:Motor, position, pause=True, save3=True, crashCheck=True):
+        
+        if self.getPosition(motor) == position:
+            return
+        
+        if position == motor.init and crashCheck:
+            self.crashCheck(motor)
+            
+        if motor.id != self.s3.id:
+            save3 = False
+
+        if save3:
+            self.tightenHorizontal(True)
+            
+        self.setPosition(motor, position, pause)
+            
+        if save3:
+            self.resetHorizontal(crashCheck=False)
+            
+    def moveGripper(self, motor:Motor, position, pause=True, interrupt=False):
+        if motor not in self.grippers:
+            raise ValueError(f"{motor} is a slider passed into setGripperNoInterrupt")
+        
+        if self.getPosition(motor) == position:
+            return
+        
+        if interrupt:
+            self.setPosition(motor, position, pause)
+        else:
+            s = self.sliders[self.grippers.index(motor)]
+            self.moveSlider(s, s.end, True)
+            self.setPosition(motor, position, True)
+            self.moveSlider(s, s.init, True)
+            self.resetHorizontal()
         
     def getPosition(self, motor:Motor):
         return self.servo.getPosition(motor.id)
@@ -133,69 +192,37 @@ class Robot:
     def inDefault(self, motor:Motor):
         current = self.getPosition(motor)
         desired = motor.init
-        print(f"{motor.name} {current}-{desired}={abs(current - desired)}")
-        return abs(current - desired) < 100
+        #print(f"{motor.name} {current}-{desired}={abs(current - desired)}")
+        return abs(current - desired) < 300
 
     # sets the robot to the default open position
     def defaultOpen(self):
         print("Setting robot to default open position")
 
-        STEP = 5
-
-        # lists with the intermediate positions and how much to be incremented in between each
-        # intermediate position
-        positions = [int(s.end) for s in self.sliders]
-        increments = [int(abs(s.init-s.end)/STEP) for s in self.sliders]
-
-        for i in range(STEP):
-            if i < STEP-1:
-                # set each slider to the next intermediate position
-                for j, s in enumerate(self.sliders):
-                    self.setPosition(s, positions[j])
-                # increment the intermediate positions
-                positions = [val + increments[i] for i, val in enumerate(positions)]
-                
-            # if on the last step, just set to default end position
-            else:
-                for s in self.sliders:
-                    self.setPosition(s, s.end)
-
-        time.sleep(SLEEP)
-
-        # move gripppers to default positions
-        for g in self.grippers:
-            self.setPosition(g, g.init)
+        self.openSliders()
+        motors = [self.g1, self.g2, self.g3, self.g4]
+        for g in motors:
+            self.moveGripper(g, g.init, False, interrupt=True)
+        time.sleep(SHORT)
 
     # sets the robot to the default closed position
     def defaultClose(self):
         print("Setting robot to default closed position")
 
-        time.sleep(SLEEP)
-
-        STEP = 5
-
-        # lists with the intermediate positions and how much to be incremented in between each
-        # intermediate position
-        positions = [int(s.init) for s in self.sliders]
-        increments = [int(abs(s.end-s.init)/STEP) for s in self.sliders]
-
-        # set movtors to default open position
-        for g in self.grippers:
-            self.setPosition(g, g.init)
+        motors = [self.g1, self.g2, self.g3, self.g4]
+        for i, g in enumerate(motors):
+            if not self.inDefault(g):
+                self.moveGripper(g, g.init, False)
+                '''
+                s = self.sliders[i]
+                if self.inDefault(s):
+                    self.moveSlider(s, s.end)
+                self.setPosition(g, g.init, False)
+                '''
+                time.sleep(SHORT)
+        self.closeSliders()
+        self.resetHorizontal()
         time.sleep(SHORT)
-
-        # first does even motors then odd motors
-        for i in range(2):
-            # increments each motor STEP even number of times
-            for j in range(STEP):
-                for k, s in enumerate(self.sliders):
-                    if k % 2 == i: # if odd or even motor
-                        if j < STEP-1:
-                            self.setPosition(s, positions[k])
-                            positions[k] -= increments[k]
-                        else:
-                            self.setPosition(s, s.init)
-                        time.sleep(SHORT)
 
     def acceptCube(self):
         self.defaultOpen()
@@ -213,50 +240,229 @@ class Robot:
         print("   provided wrong input in isInDefaultPosition():robot.py 117")
         print("   argument: " + str(motor))
         return False
+    
+    def tightenHorizontal(self, extra=False):
+        amount = 100
+        if extra:
+            amount += 100
+        self.setPosition(self.s2, self.s2.init-amount, False)
+        self.setPosition(self.s4, self.s4.init-amount, False)
+        
+    def resetHorizontal(self, crashCheck=True):
+        self.moveSlider(self.s2, self.s2.init, False, crashCheck=crashCheck)
+        self.moveSlider(self.s4, self.s4.init, True, crashCheck=crashCheck)
+        
+    def openHorizontal(self):
+        self.moveSlider(self.s2, self.s2.end, False)
+        self.moveSlider(self.s4, self.s4.end, True)
+        
+    def resetVertical(self):
+        self.moveSlider(self.s1, self.s1.init, False)
+        self.moveSlider(self.s3, self.s3.init, True)
+        
+    def openVertical(self):
+        self.moveSlider(self.s1, self.s1.end, False)
+        self.moveSlider(self.s3, self.s3.end, True)
+        
+    def openSliders(self):
+        self.moveSlider(self.s1, self.s1.end, False, crashCheck=False)
+        self.moveSlider(self.s2, self.s2.end, False, crashCheck=False)
+        self.moveSlider(self.s3, self.s3.end, False, crashCheck=False, save3=False)
+        self.moveSlider(self.s4, self.s4.end, crashCheck=False)
+
+    def closeSliders(self):
+        self.moveSlider(self.s1, self.s1.init, False)
+        self.moveSlider(self.s3, self.s3.init, False)
+        self.moveSlider(self.s2, self.s2.init, False)
+        self.moveSlider(self.s4, self.s4.init, True)
+        
             
-    def prepare_UD(self):
+    def prepareVertical(self, extra=False):
         """Prepares the U and D motors for a L/R rotation
         by maving the U and D motors into the initial position
         """
         
+        gs = [self.g3, self.g1]
+        ss = [self.s3, self.s1]
+        for i in range(len(gs)):
+            g = gs[i]
+            if not self.inDefault(g):
+                self.tightenHorizontal(extra)
+                self.moveGripper(g, g.init)
+                self.resetHorizontal()
         
-    def prepare_LR(self):
+        
+    def prepareHorizontal(self, extra=False):
         """Prepares the L and R motors for a U/D rotation
         by maving the L and R motors into the initial position
         """
-            
-    def translate_solution(self, solution:str,rotation_command:str):
+        gs = [self.g2, self.g4]
+        ss = [self.s2, self.s4]
+        for i in range(len(gs)):
+            g = gs[i]
+            if not self.inDefault(g):
+                self.moveGripper(g, g.init)
+                
+    def updateTranslation(self, rotation_command:str, prime:bool):
         """Optimizes the amount of full cube rotations 
         when the robot needs to make in response to an F/B cube movement.
-        It specifically replaces the coming commands with their rotated 
-        counter-parts as if the cube rotation never happened
-        
-        Parameters
-        ----------
-        solution : str
-            the rest of the solution string for the cube
-        rotation_command : str
-            the rotation command that just occured, helps the function
-            know which sides should be translated to which sides
-            Ex: if the rotation was a "y", then all of the "B" rotations
-                will now be translated as a "L" rotation
-                
-        Returns
-        ----------
-        str
-            the translated solution
+        It specifically changes the translation of each future command.
         """
-        pass
+        patterns = {"y":["F", "R", "B", "L"],
+                    "x":["F", "U", "B", "D"],
+                    "z":["L", "U", "R", "D"]}
+        
+        oldTranslation = self.translation.copy()
+        
+        increment = 1
+        if prime:
+            increment = -1
+        pattern = patterns[rotation_command]
+        for i in range(len(pattern)):
+            curr = pattern[i]
+            trans = oldTranslation[pattern[(i+increment)%4]]
+            self.translation[curr] = trans
             
+        print(self.translation)
+        
+    def rotate_z(self, prime):
+        self.rotate_y(False)
+        self.rotate_x(prime)
+        self.rotate_y(True)
+    
+    def rotate_x(self, prime):
+        if not prime:
+            # prepare left and right gripper for turn
+            self.moveGripper(self.g2, self.g2.end)
+            self.moveGripper(self.g4, self.g4.init)
+            self.openVertical()
+            # do the simultaneous turn
+            time.sleep(0.2)
+            self.setPosition(self.g2, self.g2.init, pause=False)
+            self.setPosition(self.g4, self.g4.end, pause=True)
+            #self.moveGripper(self.g2, self.g2.init, False, True)
+            #self.moveGripper(self.g4, self.g4.end, True, True)
+        else:
+            # prepare left and right gripper for turn
+            self.moveGripper(self.g2, self.g2.init)
+            self.moveGripper(self.g4, self.g4.end)
+            self.openVertical()
+            # do the simultaneous turn
+            time.sleep(0.2)
+            self.setPosition(self.g2, self.g2.end, pause=False)
+            self.setPosition(self.g4, self.g4.init, pause=True)
+            #self.moveGripper(self.g2, self.g2.end, False, True)
+            #self.moveGripper(self.g4, self.g4.init, True, True)
+        self.resetVertical()
+        self.defaultClose()
+        
+    def rotate_y(self, prime):
+        if not prime:
+            # position top and bottom grippers
+            self.moveGripper(self.g3,self.g3.init)
+            self.moveGripper(self.g1, self.g1.end)
+            self.openHorizontal()
+            # do the simultaneous turn of top and bottom
+            time.sleep(0.2)
+            self.setPosition(self.g3, self.g3.end, pause=False)
+            self.setPosition(self.g1, self.g1.init, pause=True)
+            #self.moveGripper(self.g3, self.g3.end, False, True)
+            #self.moveGripper(self.g1, self.g1.init, True, True)
+        else:
+            # position top and bottom grippers
+            self.moveGripper(self.g3, self.g3.end)
+            self.moveGripper(self.g1, self.g1.init)
+            self.openHorizontal()
+            # do the simultaneous turn of top and bottom
+            time.sleep(0.2)
+            self.setPosition(self.g3, self.g3.init, pause=False)
+            self.setPosition(self.g1, self.g1.end, pause=True )
+            #self.moveGripper(self.g3, self.g3.init, False, True)
+            #self.moveGripper(self.g1, self.g1.end, True, True)
+        self.resetHorizontal()
+        self.defaultClose()
+        
 
-    def rotate_cube(self, rotation_command: str, prime: bool):
+    def rotate_cube(self, rotation_command: str, prime: bool, double=False):
         """Rotates the entire cube
         
         rotation_command examples: "y", "x'", "z"
         """
-        pass
+        if rotation_command == "x":
+            if double:
+                self.prepareVertical()
+                self.rotate_x(prime)
+            self.prepareVertical()
+            self.rotate_x(prime)
+        elif rotation_command == "y":
+            if double:
+                self.prepareHorizontal()
+                self.rotate_y(prime)
+            self.prepareHorizontal()
+            self.rotate_y(prime)
+        elif rotation_command == "z":
+            if double:
+                self.rotate_z(prime)
+            self.rotate_z(prime)
+        else:
+            raise ValueError(
+                "rotate_cube command not valid {} prime({})".format(rotation_command, prime))
+    
+    def rotate_L(self, prime):
+        if prime:
+            self.moveGripper(self.g4, self.g4.init)
+            self.moveSlider(self.s4, self.s4.init)
+            self.moveGripper(self.g4, self.g4.end, interrupt=True)
+        else:
+            self.moveGripper(self.g4, self.g4.end)
+            self.moveSlider(self.s4, self.s4.init)
+            self.moveGripper(self.g4, self.g4.init, interrupt=True)
+                
+    def rotate_R(self, prime):
+        if prime:
+            self.moveGripper(self.g2, self.g2.init)
+            self.moveSlider(self.s2, self.s2.init)
+            self.moveGripper(self.g2, self.g2.end, interrupt=True)
+        else:
+            self.moveGripper(self.g2, self.g2.end)
+            self.moveSlider(self.s2, self.s2.init)
+            self.moveGripper(self.g2, self.g2.init, interrupt=True)
+                
+    def rotate_U(self, prime):
+        if not prime:
+            self.moveGripper(self.g1, self.g1.init)
+            self.moveSlider(self.s1, self.s1.init)
+            self.moveGripper(self.g1, self.g1.end, interrupt=True)
+        else:
+            self.moveGripper(self.g1, self.g1.end)
+            self.moveSlider(self.s1, self.s1.init)
+            self.moveGripper(self.g1, self.g1.init, interrupt=True)
+                
+    def rotate_D(self, prime):
+        if not prime:
+            self.moveGripper(self.g3, self.g3.init)
+            self.moveSlider(self.s3, self.s3.init)
+            self.moveGripper(self.g3, self.g3.end, interrupt=True)
+        else:
+            self.moveGripper(self.g3, self.g3.end)
+            self.moveSlider(self.s3, self.s3.init)
+            self.moveGripper(self.g3, self.g3.init, interrupt=True)
             
-    def rotate_side(self, side_command:str, prime:bool):
+    def rotate_F(self, prime, double=False):
+        self.rotate_cube("y", False)
+        if double:
+            self.rotate_side("R", prime)
+        self.rotate_side("R", prime)
+        self.updateTranslation("y",False)
+    
+    def rotate_B(self, prime, double=False):
+        self.rotate_cube("y", False)
+        if double:
+            self.rotate_side("L", prime)
+        self.rotate_side("L", prime)
+        self.updateTranslation("y", False)
+            
+    def rotate_side(self, side_command:str, prime:bool, double=False):
         """Rotates a specified side of the cube from the
         passed in side_command (Ex: "R", "F'", "D2")
         
@@ -265,25 +471,35 @@ class Robot:
         side_command : str
             the command that needs to be performed
         """
+        print("rotate_side: " + side_command)
         if side_command == "F":
-            pass
+            self.rotate_F(prime, double)
         elif side_command == "B":
-            pass
+            self.rotate_B(prime, double)
         elif side_command == "L":
-            self.prepare_UD(True)
-            
+            self.prepareVertical()
+            if double:
+                self.rotate_L(prime)
+            self.rotate_L(prime)
         elif side_command == "R":
-            pass
+            self.prepareVertical()
+            if double:
+                self.rotate_R(prime)
+            self.rotate_R(prime)
         elif side_command == "U":
-            pass
+            self.prepareHorizontal()
+            if double:
+                self.rotate_U(prime)
+            self.rotate_U(prime)
         elif side_command == "D":
-            pass
+            self.prepareHorizontal(extra=True)
+            if double:
+                self.rotate_D(prime)
+            self.rotate_D(prime)
+            self.resetHorizontal()
         else:
             raise ValueError(
                 "rotate_side command not valid {} prime({})".format(side_command, prime))
-        
-        
-        pass
 
     def parse_solution(self, algorithm:str):
         """Takes in a solution for the cube, parses it, 
@@ -295,35 +511,39 @@ class Robot:
         algorithm : str
             the set of movements from cube.py that will solve the cube
         """
-        algorithm = "R U R' R U R' U R U R' R U' R' U' R U R'"
+        self.defaultClose()
+        #algorithm = "R U R' R U R' U R U R' R U' R' U' R U R'"
         movements = algorithm.split(" ")
+        print(movements)
         
         for movement in movements:
-            
-            if movement[0].lower():
+            print("parse_solution: " + movement, end=" : ")
+            movement = self.translation[movement[0]] + movement[1:]
+            print(movement)
+            if movement[0].islower():
                 if len(movement) == 1:
                     # x y z
-                    self.rotate_cube(movement, False)
+                    self.rotate_cube(movement[0], False)
                 else:
                     if movement[1] == "'":
                         # x' y' z'
-                        self.rotate_cube(movement, True)
+                        self.rotate_cube(movement[0], True)
                     elif movement[1] == "2":
-                        for i in range(2):
-                            # x2 y2 z2
-                            self.rotate_cube(movement, False)
+                        # x2 y2 z2
+                        self.rotate_cube(movement[0], False, double=True)
+                            
             else:
                 if len(movement) == 1:
                     # any normal side movement
-                    self.rotate_side(movement, False)
+                    self.rotate_side(movement[0], False)
                 else:
                     if movement[1] == "'":
                         # any prime side movement
-                        self.rotate_side(movement, True)
+                        self.rotate_side(movement[0], True)
                     elif movement[1] == "2":
-                        for i in range(2):
-                            # any side double movement
-                            self.rotate_side(movement, False)
+                        # any side double movement
+                        self.rotate_side(movement[0], False, double=True)
+                            
         
 
 

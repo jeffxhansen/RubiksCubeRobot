@@ -1,4 +1,51 @@
+from cube import Cube
+cube = Cube()
+algorithm = "U L R' x U2 y R' U2 R U2 F R x' U'"
+print(algorithm)
+print(cube.reverseAlgorithm(algorithm))
 
+name = "Jeff"
+name += " Hansen"
+print(name)
+
+
+def updateTranslation(rotation_command: str, prime: bool):
+    global translation
+    global patterns
+    oldTranslation = translation.copy()
+    increment = 1
+    if prime:
+        increment = -1
+    pattern = patterns[rotation_command]
+    index = pattern.index(translation[pattern[0]])
+    for i in range(len(pattern)):
+        curr = pattern[index]
+        trans = oldTranslation[pattern[(index+increment) %4]]
+        translation[curr] = trans
+        index = (index + 1) % 4
+
+    print(translation)
+    
+
+translation = {"L": "L", "R": "R", "B": "B",
+               "U": "U", "D": "D", "F": "F",
+               "x": "x", "y": "y", "z": "z"}
+
+patterns = {"y": ["F", "R", "B", "L"],
+            "x": ["F", "U", "B", "D"],
+            "z": ["L", "U", "R", "D"]}
+
+movements = "F R F R"
+movements = movements.split(" ")
+
+for movement in movements:
+    print(movement, end=" : ")
+    movement = translation[movement]
+    print(movement)
+
+    if movement == "F" or movement == "B":
+        updateTranslation("y", False)
+    
 '''
 import cv2 as cv
 import numpy as np
@@ -231,7 +278,7 @@ print(people.keys())
 print(type(people.keys()))
 pKeys = people.keys()
         
-'''
+
 
 def strangeFunction(n):
     print(n)
@@ -281,3 +328,4 @@ names = ["Jeff", "TrevDawg", "Jacob", "Brian"]
 
 for name, i in enumerate(names):
     print(str(name) + " " + str(i))
+'''
