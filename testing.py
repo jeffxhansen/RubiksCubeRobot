@@ -1,3 +1,10 @@
+
+import numpy as np
+a = np.array([1,1,1])
+b = np.array([3,3,3])
+print((a+b)/2)
+
+'''
 from cube import Cube
 cube = Cube()
 algorithm = "U L R' x U2 y R' U2 R U2 F R x' U'"
@@ -46,7 +53,7 @@ for movement in movements:
     if movement == "F" or movement == "B":
         updateTranslation("y", False)
     
-'''
+
 import cv2 as cv
 import numpy as np
 print(cv.__version__)

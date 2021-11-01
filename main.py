@@ -1,4 +1,5 @@
 
+from cameraSensor import CameraSensor
 from cube import Cube
 from robot import Robot
 
@@ -1062,5 +1063,104 @@ def doesItActuallyWork():
     robot.parse_solution(solution)
     robot.defaultOpen()
     
+def prepForWebcam():
+    robot = Robot()
+    robot.defaultOpen()
+    robot.moveGripper(robot.g3, robot.g3.end, interrupt=True)
+    robot.moveSlider(robot.s3, robot.s3.init, save3=False)
+    
+def inPicturePosition(robot):
+    robot.moveGripper(robot.g3, robot.g3.end, pause=True, interrupt=False)
+    robot.moveSlider(robot.s3, robot.s3.init, True)
+    robot.moveSlider(robot.s1, robot.s1.end, False)
+    robot.moveSlider(robot.s2, robot.s2.end, False)
+    robot.moveSlider(robot.s4, robot.s4.end, False)
+    time.sleep(2)
+    
+def takePics():
+    robot = Robot()
+    movements = ["y", "y", "x", "y", "y", "UN"]
+    # U y L y D x F y R y B
+    sides = ["U", "L", "D", "F", "R", "B"]
+    robot.acceptCube()
+    for i, movement in enumerate(movements):
+        side = sides[i]
+        fileName = "./webcam/" + side + ".jpg"
+        inPicturePosition(robot)
+        print(fileName)
+        input("Ready for next?")
+        c = False
+        if movement == "x":
+            c = True
+        robot.parse_solution(movement, close=c)
 
-doesItActuallyWork()
+
+
+def testings():
+    robot = Robot()
+    cube = Cube()
+    #robot.acceptCube()
+    #robot.redOrangeTest()
+    
+    robot.acceptCube()
+    robot.takePictures()
+    sides, vals = robot.getCubeVals()
+    cube.set(vals, sides)
+    print(cube)
+    
+    
+    
+def averageColorVals():
+    robot = Robot()
+    robot.acceptCube()
+    robot.picurePosition()
+    cam = CameraSensor()
+    fileName = "./webcam/test.jpg"
+    cam.takePicture(fileName)
+    averages = cam.averages(fileName)
+    orange = averages[1]
+    blue = averages[3]
+    yellow = averages[4]
+    green = averages[5]
+    red = averages[7]
+    for i in range(10):
+        cam.takePicture(fileName)
+        averages = cam.averages(fileName)
+        orange += averages[1]
+        blue += averages[3]
+        yellow += averages[4]
+        green += averages[5]
+        red += averages[7]
+    orange /= 11
+    blue /= 11
+    yellow /= 11
+    green /= 11
+    red /= 11
+    print(orange)
+    print(blue)
+    print(yellow)
+    print(green)
+    print(red)
+        
+
+def run():
+    robot = Robot()
+    cube = Cube()
+    
+    robot.acceptCube()
+    robot.takePictures()
+    sides, vals = robot.getCubeVals()
+    cube.set(vals, sides)
+    print(cube)
+    input("continue?")
+    solution = cube.solution()
+    robot.parse_solution(solution)
+    robot.defaultOpen()
+
+run()
+#averageColorVals()
+#testings()
+#takePics()
+#prepForWebcam()
+#doesItActuallyWork()
+

@@ -3,6 +3,8 @@ import time
 
 #from serial.serialposix import PlatformSpecificBase
 import maestro
+from cameraSensor import CameraSensor
+import numpy as np
 
 """
 This section includes Constants that are used for the robot
@@ -109,6 +111,8 @@ class Robot:
         self.translation = {"L": "L", "R": "R", "B": "B",
                             "U": "U", "D": "D", "F": "F",
                             "x": "x", "y": "y", "z": "z"}
+        
+        self.camSensor = CameraSensor()
             
     def __str__(self):
         returnString = ""
@@ -212,21 +216,16 @@ class Robot:
         motors = [self.g1, self.g2, self.g3, self.g4]
         for i, g in enumerate(motors):
             if not self.inDefault(g):
-                self.moveGripper(g, g.init, False)
-                '''
-                s = self.sliders[i]
-                if self.inDefault(s):
-                    self.moveSlider(s, s.end)
-                self.setPosition(g, g.init, False)
-                '''
+                self.moveGripper(g, g.init, False, interrupt=False)
                 time.sleep(SHORT)
-        self.closeSliders()
+        print("Grippers good")
+        self.closeSliders(save3=False)
         self.resetHorizontal()
         time.sleep(SHORT)
 
     def acceptCube(self):
         self.defaultOpen()
-        time.sleep(SLEEP*2)
+        input("Ready?")
         self.defaultClose()
         time.sleep(SHORT)
 
@@ -245,8 +244,8 @@ class Robot:
         amount = 100
         if extra:
             amount += 100
-        self.setPosition(self.s2, self.s2.init-amount, False)
-        self.setPosition(self.s4, self.s4.init-amount, False)
+        self.setPosition(self.s2, self.s2.init, False) # -amount
+        self.setPosition(self.s4, self.s4.init, True) # -amount
         
     def resetHorizontal(self, crashCheck=True):
         self.moveSlider(self.s2, self.s2.init, False, crashCheck=crashCheck)
@@ -270,9 +269,9 @@ class Robot:
         self.moveSlider(self.s3, self.s3.end, False, crashCheck=False, save3=False)
         self.moveSlider(self.s4, self.s4.end, crashCheck=False)
 
-    def closeSliders(self):
+    def closeSliders(self, save3=True):
         self.moveSlider(self.s1, self.s1.init, False)
-        self.moveSlider(self.s3, self.s3.init, False)
+        self.moveSlider(self.s3, self.s3.init, True, save3)
         self.moveSlider(self.s2, self.s2.init, False)
         self.moveSlider(self.s4, self.s4.init, True)
         
@@ -290,7 +289,9 @@ class Robot:
                 self.tightenHorizontal(extra)
                 self.moveGripper(g, g.init)
                 self.resetHorizontal()
-        
+        for s in ss:
+            self.moveSlider(s, s.init, False)
+        time.sleep(SHORT)
         
     def prepareHorizontal(self, extra=False):
         """Prepares the L and R motors for a U/D rotation
@@ -302,6 +303,9 @@ class Robot:
             g = gs[i]
             if not self.inDefault(g):
                 self.moveGripper(g, g.init)
+        for s in ss:
+            self.moveSlider(s,s.init, False)
+        time.sleep(SHORT)
                 
     def updateTranslation(self, rotation_command:str, prime:bool):
         """Optimizes the amount of full cube rotations 
@@ -357,10 +361,11 @@ class Robot:
         self.defaultClose()
         
     def rotate_y(self, prime):
-        if not prime:
+        if prime:
             # position top and bottom grippers
             self.moveGripper(self.g3,self.g3.init)
             self.moveGripper(self.g1, self.g1.end)
+            self.moveSlider(self.s1, self.s1.init)
             self.openHorizontal()
             # do the simultaneous turn of top and bottom
             time.sleep(0.2)
@@ -372,6 +377,7 @@ class Robot:
             # position top and bottom grippers
             self.moveGripper(self.g3, self.g3.end)
             self.moveGripper(self.g1, self.g1.init)
+            self.moveSlider(self.s1, self.s1.init)
             self.openHorizontal()
             # do the simultaneous turn of top and bottom
             time.sleep(0.2)
@@ -501,7 +507,7 @@ class Robot:
             raise ValueError(
                 "rotate_side command not valid {} prime({})".format(side_command, prime))
 
-    def parse_solution(self, algorithm:str):
+    def parse_solution(self, algorithm:str, close=True):
         """Takes in a solution for the cube, parses it, 
         and rotates the motors to solve the physical
         Rubik's Cube
@@ -511,7 +517,8 @@ class Robot:
         algorithm : str
             the set of movements from cube.py that will solve the cube
         """
-        self.defaultClose()
+        if close:
+            self.defaultClose()
         #algorithm = "R U R' R U R' U R U R' R U' R' U' R U R'"
         movements = algorithm.split(" ")
         print(movements)
@@ -543,6 +550,55 @@ class Robot:
                     elif movement[1] == "2":
                         # any side double movement
                         self.rotate_side(movement[0], False, double=True)
+                        
+    def picurePosition(self):
+        self.moveGripper(self.g3, self.g3.end, pause=True, interrupt=False)
+        self.moveSlider(self.s3, self.s3.init, True)
+        self.moveSlider(self.s1, self.s1.end, False)
+        self.moveSlider(self.s2, self.s2.end, False)
+        self.moveSlider(self.s4, self.s4.end, False)
+        
+    def takePictures(self):
+        movements = ["y", "y", "x", "y", "y", "UN"]
+        # U y L y D x F y R y B
+        sides = ["U", "L", "D", "F", "R", "B"]
+        for i, movement in enumerate(movements):
+            side = sides[i]
+            fileName = "./webcam/" + side + ".jpg"
+            self.picurePosition()
+            self.camSensor.takePicture(fileName)
+            c = False
+            if movement == "x":
+                c = True
+            self.parse_solution(movement, close=c)
+            
+    def getCubeVals(self):
+        sides = ["L", "R", "B", "U", "D", "F"]
+        files = [str("./webcam/" + side + ".jpg") for side in sides]
+        return self.camSensor.getValues(files)
+    
+    def redOrangeTest(self):
+        file1 = "./webcam/"
+        file2 = ".jpg"
+        #self.picurePosition()
+        for i in range(11):
+            redName = file1 + "r" + str(i) + file2
+            self.camSensor.takePicture(redName)
+            averages = self.camSensor.averages(redName)
+            if i == 0:
+                reds = np.array([averages[5]])
+                oranges = np.array([averages[4]])
+                continue
+            for i, val in enumerate(averages):
+                if i%2==0:
+                    reds = np.append(reds, [val], axis=0)
+                else:
+                    oranges = np.append(oranges, [val], axis=0)
+        print(np.average(reds, axis=0))
+        print(np.average(oranges, axis=0))
+
+
+        
                             
         
 

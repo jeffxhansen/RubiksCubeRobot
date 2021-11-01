@@ -146,6 +146,8 @@ class Cube:
         self.visitedCorners = []
 
     def set(self, values, colors):
+        print(values)
+        print(colors)
         self.values = values
         if type(colors) != "default":
             for i in range(NUM_SIDES):
