@@ -973,7 +973,9 @@ def getScramble(scrambleSize, sides=["L", "R", "U", "D", "F", "B"]):
     movements = []
     for side in sides:
         movements.append(side + " ")
+        movements.append(side + " ")
         movements.append(side + "2 ")
+        movements.append(side + "' ")
         movements.append(side + "' ")
         
     scramble = ""
@@ -1049,7 +1051,6 @@ def doesItActuallyWork():
     cube = Cube()
     robot = Robot()
     
-    robot.defaultOpen()
     scramble = getScramble(10)
     #scramble = "B' L2 F2 B2 D' B L' D2 R2 B'"
     cube.rotations(scramble)
@@ -1062,6 +1063,14 @@ def doesItActuallyWork():
     robot.acceptCube()
     robot.parse_solution(solution)
     robot.defaultOpen()
+    
+def fbTests():
+    robot = Robot()
+    robot.acceptCube()
+    robot.parse_solution("B F B F R")
+
+#fbTests()
+#doesItActuallyWork()
     
 def prepForWebcam():
     robot = Robot()
@@ -1094,26 +1103,26 @@ def takePics():
             c = True
         robot.parse_solution(movement, close=c)
 
-
+def findReferences():
+    robot = Robot()
+    #robot.acceptCube()
+    #robot.picturePosition()
+    robot.referencePicture()
 
 def testings():
     robot = Robot()
     cube = Cube()
-    #robot.acceptCube()
-    #robot.redOrangeTest()
-    
-    robot.acceptCube()
-    robot.takePictures()
-    sides, vals = robot.getCubeVals()
-    cube.set(vals, sides)
-    print(cube)
+    #robot.moveSlider(robot.s2, robot.s2.end, False)
+    #robot.moveSlider(robot.s4, robot.s4.end, False)
+    robot.moveSlider(robot.s1, robot.s1.init, save3=False)
+    robot.moveSlider(robot.s3, robot.s3.init, save3=False)
     
     
     
 def averageColorVals():
     robot = Robot()
     robot.acceptCube()
-    robot.picurePosition()
+    robot.picturePosition()
     cam = CameraSensor()
     fileName = "./webcam/test.jpg"
     cam.takePicture(fileName)
@@ -1151,13 +1160,27 @@ def run():
     robot.takePictures()
     sides, vals = robot.getCubeVals()
     cube.set(vals, sides)
-    print(cube)
-    input("continue?")
+    #robot.defaultOpen()
+    #print(cube)
+    #robot.camSensor.printColorAverages()
+    #robot.acceptCube()
     solution = cube.solution()
     robot.parse_solution(solution)
     robot.defaultOpen()
 
+def webcStream():
+    cam = CameraSensor()
+    cam.streamWebcamVideo()
+    
+def cubeTest():
+    cube = Cube()
+    cube.set([0, 0, 0, 0, 3, 3, 3, 0, 4, 1, 1, 1, 1, 1, 4, 4, 2, 2, 3, 3, 1, 2, 2, 2, 3, 3, 5, 5,
+             5, 1, 1, 3, 0, 0, 2, 2, 2, 4, 4, 4, 5, 5, 0, 4, 4, 5, 5, 5], ['b', 'g', 'y', 'r', 'o', 'w'])
+    print(cube.solution())
+#webcStream()
 run()
+#cubeTest()
+#findReferences()
 #averageColorVals()
 #testings()
 #takePics()

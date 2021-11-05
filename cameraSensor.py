@@ -12,6 +12,7 @@ class CameraSensor:
         capture = cv.VideoCapture(0)
         ret, frame = capture.read()
         self.camHeight, self.camWidth, self.camColors = frame.shape
+        capture.release()
 
         self.cubeDim = 294
         self.startPoint = None
@@ -58,16 +59,33 @@ class CameraSensor:
             eyShift += 2
             
     def initCoreColors(self, colors=None):
-        
-        RED = np.array([80,80,160])
-        ORANGE = np.array([100,140,200])
-        YELLOW = np.array([100,200,220])
-        GREEN = np.array([100,170,80])
-        BLUE = np.array([175,120,50])
-        WHITE = np.array([200,200,200])
+
+        '''
+        RED = np.array([40,40,120])/255
+        ORANGE = np.array([100,140,200])/255
+        YELLOW = np.array([100,200,220])/255
+        GREEN = np.array([100,170,80])/255
+        BLUE = np.array([175,120,50])/255
+        WHITE = np.array([200, 200, 200])/255
         self.coreColors = [RED/norm(RED), ORANGE/norm(ORANGE), 
                            YELLOW/norm(YELLOW), GREEN/norm(GREEN), 
                            BLUE/norm(BLUE), WHITE/norm(WHITE)]
+        '''
+        
+        RED = np.array([65,85,230])
+        ORANGE = np.array([80,170,250])
+        YELLOW = np.array([95,215,210])
+        GREEN = np.array([125,225,85])
+        BLUE = np.array([210,115,50])
+        WHITE = np.array([205, 205, 190])
+        self.coreColors = [RED, ORANGE, YELLOW, GREEN, BLUE, WHITE]
+        
+        self.reds = np.array(RED)
+        self.oranges = np.array(ORANGE)
+        self.yellows = np.array(YELLOW)
+        self.greens = np.array(GREEN)
+        self.blues = np.array(BLUE)
+        self.whites = np.array(WHITE)
         
         '''
         RED = np.array([5.97083801, 157.63980131,  89.28440955])
@@ -92,6 +110,12 @@ class CameraSensor:
         
         for i, o in enumerate(order):
             self.colorKey[o] = i
+            
+    def updateOranges(self):
+        avgOrange = np.average(self.oranges, axis=0)
+        normalizedOrange = avgOrange/255
+        normalizedOrange /= norm(normalizedOrange)
+        self.coreColors[1] = normalizedOrange
 
     def streamWebcamVideo(self):
         videoCaptureObject = cv.VideoCapture(1)
@@ -148,6 +172,28 @@ class CameraSensor:
         hsv = cv.cvtColor(img, cv.COLOR_BGR2HSV) # convert image to HSV color space
         hsv = np.array(hsv, dtype = np.float64)
         return hsv
+    
+    def referencePicture(self):
+        capture = cv.VideoCapture(0)
+        ret, img = capture.read()
+        
+        area = [(5, 150), (95, 210)]
+        leftArea = img[area[0][1]:area[1][1]+1, area[0][0]:area[1][0]+1]
+        redAverage = np.average(np.average(leftArea, axis=1), axis=0)
+        area = [(505,150), (595,210)]
+        rightArea = img[area[0][1]:area[1][1]+1, area[0][0]:area[1][0]+1]
+        orangeAverage = np.average(np.average(rightArea, axis=1), axis=0)
+        
+        '''
+        redAverage /= 255
+        redAverage /= norm(redAverage)
+        orangeAverage /= 255
+        orangeAverage /= norm(orangeAverage)
+        '''
+        
+        self.coreColors[0] = redAverage
+        self.coreColors[1] = orangeAverage
+        capture.release()
 
     def takePicture(self, name):
         capture = cv.VideoCapture(0)
@@ -183,6 +229,9 @@ class CameraSensor:
     
     def euclidean_similarity(self, a, b):
         return sqrt(sum(pow(x-y,2) for x, y in zip(a, b)))
+    
+    def dot_product_similarity(self, a, b):
+        return np.dot(a, b)
 
     def averages(self, file: str):
         img = cv.imread(file, 1)
@@ -195,20 +244,90 @@ class CameraSensor:
 
         return averages
     
+    def updateColors(self, color, pixel):
+        if color == "w":
+            print("White Updated:")
+            print(self.whites)
+            self.whites = np.append([self.whites], [pixel], axis=0)
+            self.whites = np.average(self.whites, axis=0)
+            print(self.whites, end="\n\n")
+        elif color == "r":
+            print("Red Updated:")
+            print(self.reds)
+            self.reds = np.append([self.reds], [pixel], axis=0)
+            self.reds = np.average(self.reds, axis=0)
+            print(self.reds, end="\n\n")
+        elif color == "o":
+            print("Orange Updated:")
+            print(self.oranges)
+            self.oranges = np.append([self.oranges], [pixel], axis=0)
+            self.oranges = np.average(self.oranges, axis=0)
+            print(self.oranges, end="\n\n")
+        elif color == "y":
+            print("Yellow Updated:")
+            print(self.yellows)
+            self.yellows = np.append([self.yellows], [pixel], axis=0)
+            self.yellows = np.average(self.yellows, axis=0)
+            print(self.yellows, end="\n\n")
+        elif color == "g":
+            print("Green Updated:")
+            print(self.greens)
+            self.greens = np.append([self.greens], [pixel], axis=0)
+            self.greens = np.average(self.greens, axis=0)
+            print(self.greens, end="\n\n")
+        elif color == "b":
+            print("Blue Updated:")
+            print(self.blues)
+            self.blues = np.append([self.blues], [pixel], axis=0)
+            self.blues = np.average(self.blues, axis=0)
+            print(self.blues, end="\n\n")
+            
+    def printColorAverages(self):
+        print("R: {}".format(self.reds))
+        print("O: {}".format(self.oranges))
+        print("Y: {}".format(self.yellows))
+        print("G: {}".format(self.greens))
+        print("B: {}".format(self.blues))
+        print("W: {}".format(self.whites))
+        
+    
     def getColor(self, pixel):
         colors = ["r", "o", "y", "g", "b", "w"]
-        
+        #pixel /= 255
         max = 0
         index = 0
+        similarities = []
         for i, c in enumerate(self.coreColors):
             #similarity = self.euclidean_similarity(pixel, c)
-            similarity = self.cosine_similarity(pixel/norm(pixel), c)
+            #similarity = self.cosine_similarity(pixel/norm(pixel), c/norm(c))
+            similarity = self.cosine_similarity(pixel, c)
+            #similarity = self.dot_product_similarity(pixel, c)
             #print("sim: {}-{} is {}".format(pixel, c, similarity))
+            similarities.append(similarity)
             if similarity > max:
                 index = i
                 max = similarity
-                
+        '''      
+        if index == 1:
+            self.oranges.append(pixel)
+            self.updateOranges()
+        '''
+            
         returnColor = colors[index]
+        self.updateColors(returnColor, pixel)
+        '''
+        if returnColor == "r" or returnColor == "o":
+            pixelNorm = norm(pixel/norm(pixel))
+            redNorm = norm(self.coreColors[0])
+            orangeNorm = norm(self.coreColors[1])
+            
+            redRate = abs(redNorm-pixelNorm)
+            orangeRate = abs(orangeNorm-pixelNorm)
+            if redRate > orangeRate:
+                returnColor = "o"
+            else:
+                returnColor = "r"
+        '''
         #print(returnColor, end="\n\n")
         return returnColor
     

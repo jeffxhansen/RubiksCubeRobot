@@ -32,10 +32,10 @@ G4_END = 3968   # gripper motor 4 clockwise-rotated position
 
 S1_INIT = 4300  # slider motor 1 closed position
 S2_INIT = 4300  # slider motor 2 closed position
-S3_INIT = 4200  # slider motor 3 closed position
+S3_INIT = 4000  # slider motor 3 closed position
 S4_INIT = 4300  # slider motor 4 closed position
 
-S1_END = 9000  # slider motor 1 open position
+S1_END = 7000  # slider motor 1 open position
 S2_END = 9000  # slider motor 2 open position
 S3_END = 9000  # slider motor 3 open position
 S4_END = 9000  # slider motor 4 open position
@@ -455,14 +455,14 @@ class Robot:
             self.moveGripper(self.g3, self.g3.init, interrupt=True)
             
     def rotate_F(self, prime, double=False):
-        self.rotate_cube("y", False)
+        self.rotate_cube("y", True)
         if double:
             self.rotate_side("R", prime)
         self.rotate_side("R", prime)
         self.updateTranslation("y",False)
     
     def rotate_B(self, prime, double=False):
-        self.rotate_cube("y", False)
+        self.rotate_cube("y", True)
         if double:
             self.rotate_side("L", prime)
         self.rotate_side("L", prime)
@@ -520,7 +520,7 @@ class Robot:
         if close:
             self.defaultClose()
         #algorithm = "R U R' R U R' U R U R' R U' R' U' R U R'"
-        movements = algorithm.split(" ")
+        movements = algorithm.split()
         print(movements)
         
         for movement in movements:
@@ -551,26 +551,36 @@ class Robot:
                         # any side double movement
                         self.rotate_side(movement[0], False, double=True)
                         
-    def picurePosition(self):
+    def picturePosition(self):
         self.moveGripper(self.g3, self.g3.end, pause=True, interrupt=False)
         self.moveSlider(self.s3, self.s3.init, True)
         self.moveSlider(self.s1, self.s1.end, False)
         self.moveSlider(self.s2, self.s2.end, False)
         self.moveSlider(self.s4, self.s4.end, False)
         
+    def referencePicture(self):
+        self.camSensor.referencePicture()
+        
+    def takePicture(self, fileName):
+        self.camSensor.takePicture(fileName)
+        
     def takePictures(self):
+        #self.picturePosition()
         movements = ["y", "y", "x", "y", "y", "UN"]
         # U y L y D x F y R y B
         sides = ["U", "L", "D", "F", "R", "B"]
         for i, movement in enumerate(movements):
             side = sides[i]
             fileName = "./webcam/" + side + ".jpg"
-            self.picurePosition()
+            self.picturePosition()
+            #self.camSensor.referencePicture()
             self.camSensor.takePicture(fileName)
             c = False
             if movement == "x":
                 c = True
             self.parse_solution(movement, close=c)
+            
+        self.defaultClose()
             
     def getCubeVals(self):
         sides = ["L", "R", "B", "U", "D", "F"]

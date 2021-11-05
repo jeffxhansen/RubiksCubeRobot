@@ -1550,16 +1550,19 @@ class Cube:
 
         if isChangeMade:
             topValues, overallValues = self.getTopValueStrings()
-
+        print(fileName, topValues, overallValues)
         algorithm = self.getZbllAlgorithm(fileName, overallValues)
 
         if algorithm == "":
             print("ERROR: Case not found with " +
                   str(overallValues) + ", " + str(fileName))
+            print(self.moves)
+            #input("done?")
             return False
         else:
             self.rotations(algorithm)
-            
+            print(self.moves)
+            #input("done?")
             if self.needsLastRotation():
                 self.lastRotation()
 
@@ -1576,13 +1579,69 @@ class Cube:
                 movements[i] = movement + "'"
                 
         return " ".join(movements)
-
+    
+    def simplifySolution(self):
+        print(self.moves)
+        before = self.moves
+        while True:
+            moves = before.split(" ")
+            for i in range(len(moves)-1):
+                curr = moves[i]
+                next = moves[i+1]
+                if len(curr) == 0 or len(next) == 0:
+                    continue
+                
+                if curr[0] == next[0]:
+                    cNorm = curr[0]
+                    cDouble = curr[0] + "2"
+                    cPrime = curr[0] + "'"
+                    nNorm = next[0]
+                    nDouble = next[0] + "2"
+                    nPrime = next[0] + "'"
+                
+                    if curr == cNorm:
+                        if next == nDouble:
+                            moves[i] = ""
+                            moves[i+1] = cPrime
+                        elif next == nPrime:
+                            moves[i] = ""
+                            moves[i+1] = ""
+                        elif next == nNorm:
+                            moves[i] = ""
+                            moves[i+1] = cDouble
+                    elif curr == cDouble:
+                        if next == nNorm:
+                            moves[i] = ""
+                            moves[i+1] = cPrime
+                        elif next == nPrime:
+                            moves[i] = ""
+                            moves[i+1] = cNorm
+                        elif next == nDouble:
+                            moves[i] = ""
+                            moves[i+1] = ""
+                    elif curr == cPrime:
+                        if next == nNorm:
+                            moves[i] = ""
+                            moves[i+1] = ""
+                        elif next == nPrime:
+                            moves[i] = ""
+                            moves[i+1] = cDouble
+                        elif next == nDouble:
+                            moves[i] = ""
+                            moves[i+1] = cNorm
+            after = " ".join(moves)
+            if before == after:
+                break
+            before = after
+        self.moves = " ".join(moves)
+        
     def solution(self):
         self.moves = ""
         self.orientEdges()
         self.solveLine()
         self.solveF2L()
         self.solveTop()
+        self.simplifySolution()
         if self.moves[-1] == " ":
             self.moves = self.moves[:-1]
         return self.moves

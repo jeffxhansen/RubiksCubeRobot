@@ -1,8 +1,28 @@
 
 import numpy as np
+
+reds = np.array([[100, 110, 250]])
+RED = np.array([100, 110, 250])
+reds = np.array([RED])
+pixel = np.array([70,90,250])
+print(reds)
+print(pixel)
+reds = np.append(reds, [pixel], axis=0)
+print(reds)
+reds = np.average(reds, axis=0)
+print(reds)
+
+
+'''
 a = np.array([1,1,1])
 b = np.array([3,3,3])
-print((a+b)/2)
+c = np.empty((3))
+print(c)
+c = np.append([c],[a],axis=0)
+c = np.append(c,[b],axis=0)
+c = np.average(c,axis=0)
+print(c)
+'''
 
 '''
 from cube import Cube
