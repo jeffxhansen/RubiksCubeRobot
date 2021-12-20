@@ -1160,6 +1160,7 @@ def run():
     robot.takePictures()
     sides, vals = robot.getCubeVals()
     cube.set(vals, sides)
+    print(cube)
     #robot.defaultOpen()
     #print(cube)
     #robot.camSensor.printColorAverages()
@@ -1174,11 +1175,21 @@ def webcStream():
     
 def cubeTest():
     cube = Cube()
-    cube.set([0, 0, 0, 0, 3, 3, 3, 0, 4, 1, 1, 1, 1, 1, 4, 4, 2, 2, 3, 3, 1, 2, 2, 2, 3, 3, 5, 5,
-             5, 1, 1, 3, 0, 0, 2, 2, 2, 4, 4, 4, 5, 5, 0, 4, 4, 5, 5, 5], ['b', 'g', 'y', 'r', 'o', 'w'])
-    print(cube.solution())
+    cube.rotations(getScramble(15))
+    cube.solution()
+    
+    
+def lightsTest():
+    
+    robot = Robot()
+    robot.camSensor.lights.setBrightness(100)
+    time.sleep(3)
+    robot.camSensor.lights.setBrightness(0)
+    
+    
 #webcStream()
 run()
+#lightsTest()
 #cubeTest()
 #findReferences()
 #averageColorVals()

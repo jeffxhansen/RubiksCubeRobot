@@ -2,7 +2,26 @@ import cv2 as cv
 import numpy as np
 from numpy.linalg import norm
 from math import sqrt
+import pigpio
+from time import sleep
 
+class Lights:
+    
+    def __init__(self):
+        self.pi = pigpio.pi()
+        
+    def getBrightness(self):
+        return self.pi.get_PWM_dutycycle(4)
+        
+    def setBrightness(self, val):
+        
+        curr = self.pi.get_PWM_dutycycle(4)
+        
+        step = 1 if curr < val else -1
+        
+        for i in range(curr, val+step, step):
+            self.pi.set_PWM_dutycycle(4, i)
+            sleep(0.002)
 
 class CameraSensor:
     
@@ -25,10 +44,12 @@ class CameraSensor:
         self.coreColors = []
         self.initCoreColors()
         self.colorKey = {"r":0, "o":1, "y":2, "g":3, "b":4, "w":5}
+        
+        self.lights = Lights()
 
     def initPoints(self):
         xShift = -24
-        yShift = 14
+        yShift = 10
         startX = (self.camWidth // 2) - (self.cubeDim // 2) + xShift
         startY = (self.camHeight // 2) - (self.cubeDim // 2) + yShift
         endX = startX + self.cubeDim
@@ -72,9 +93,9 @@ class CameraSensor:
                            BLUE/norm(BLUE), WHITE/norm(WHITE)]
         '''
         
-        RED = np.array([65,85,230])
-        ORANGE = np.array([80,170,250])
-        YELLOW = np.array([95,215,210])
+        RED = np.array([120,120,240])
+        ORANGE = np.array([90,170,250])
+        YELLOW = np.array([95,215,180])
         GREEN = np.array([125,225,85])
         BLUE = np.array([210,115,50])
         WHITE = np.array([205, 205, 190])
@@ -195,7 +216,11 @@ class CameraSensor:
         self.coreColors[1] = orangeAverage
         capture.release()
 
-    def takePicture(self, name):
+    def takePicture(self, name, brightness=0):
+        
+        if brightness != 0:
+            self.lights.setBrightness(brightness)
+        
         capture = cv.VideoCapture(0)
         ret, frame = capture.read()
         #frame = self.enhancePicture(frame)
@@ -223,6 +248,13 @@ class CameraSensor:
         self.largeBox(original)
         self.smallBoxes(original, "./webcam/smallBoxes.jpg")
         print(self.cubies)
+        
+    def sum_similarity(self, a, b):
+        #a = a/norm(a)
+        #b = b/norm(b)
+        result = abs(a[0]-b[0])+abs(a[1]-b[1])+abs(a[2]-b[2])
+        result = -result
+        return result
 
     def cosine_similarity(self, a, b):
         return np.dot(a, b)/(norm(a)*norm(b))
@@ -244,6 +276,17 @@ class CameraSensor:
 
         return averages
     
+    def averages2(self, file: str):
+        img = cv.imread(file, 1)
+        #img = self.convertToHSV(img)
+        averages = []
+        for area in self.cubies:
+            subImg = img[area[0][1]:area[1][1]+1, area[0][0]:area[1][0]+1]
+            avgPixel = np.average(np.average(subImg, axis=1), axis=0)
+            averages.append(avgPixel)
+
+        return averages
+    
     def updateColors(self, color, pixel):
         if color == "w":
             print("White Updated:")
@@ -251,36 +294,42 @@ class CameraSensor:
             self.whites = np.append([self.whites], [pixel], axis=0)
             self.whites = np.average(self.whites, axis=0)
             print(self.whites, end="\n\n")
+            #self.coreColors[5] = self.whites
         elif color == "r":
             print("Red Updated:")
             print(self.reds)
             self.reds = np.append([self.reds], [pixel], axis=0)
             self.reds = np.average(self.reds, axis=0)
             print(self.reds, end="\n\n")
+            #self.coreColors[0] = self.reds
         elif color == "o":
             print("Orange Updated:")
             print(self.oranges)
             self.oranges = np.append([self.oranges], [pixel], axis=0)
             self.oranges = np.average(self.oranges, axis=0)
             print(self.oranges, end="\n\n")
+            #self.coreColors[1] = self.oranges
         elif color == "y":
             print("Yellow Updated:")
             print(self.yellows)
             self.yellows = np.append([self.yellows], [pixel], axis=0)
             self.yellows = np.average(self.yellows, axis=0)
             print(self.yellows, end="\n\n")
+            #self.coreColors[2] = self.yellows
         elif color == "g":
             print("Green Updated:")
             print(self.greens)
             self.greens = np.append([self.greens], [pixel], axis=0)
             self.greens = np.average(self.greens, axis=0)
             print(self.greens, end="\n\n")
+            #self.coreColors[3] = self.greens
         elif color == "b":
             print("Blue Updated:")
             print(self.blues)
             self.blues = np.append([self.blues], [pixel], axis=0)
             self.blues = np.average(self.blues, axis=0)
             print(self.blues, end="\n\n")
+            #self.coreColors[4] = self.blues
             
     def printColorAverages(self):
         print("R: {}".format(self.reds))
@@ -294,16 +343,17 @@ class CameraSensor:
     def getColor(self, pixel):
         colors = ["r", "o", "y", "g", "b", "w"]
         #pixel /= 255
-        max = 0
+        max = -float('inf')
         index = 0
         similarities = []
         for i, c in enumerate(self.coreColors):
             #similarity = self.euclidean_similarity(pixel, c)
             #similarity = self.cosine_similarity(pixel/norm(pixel), c/norm(c))
-            similarity = self.cosine_similarity(pixel, c)
+            similarity = self.sum_similarity(pixel, c)
+            #similarity = self.cosine_similarity(pixel, c)
             #similarity = self.dot_product_similarity(pixel, c)
             #print("sim: {}-{} is {}".format(pixel, c, similarity))
-            similarities.append(similarity)
+            similarities.append(tuple([pixel, c, similarity, colors[i]]))
             if similarity > max:
                 index = i
                 max = similarity
@@ -312,17 +362,19 @@ class CameraSensor:
             self.oranges.append(pixel)
             self.updateOranges()
         '''
-            
+        for t in similarities:
+            print(t)
+        print()
         returnColor = colors[index]
         self.updateColors(returnColor, pixel)
         '''
         if returnColor == "r" or returnColor == "o":
-            pixelNorm = norm(pixel/norm(pixel))
-            redNorm = norm(self.coreColors[0])
-            orangeNorm = norm(self.coreColors[1])
+            pixelG = pixel[1]
+            redG = self.coreColors[0][1]
+            orangeG = self.coreColors[1][1]
             
-            redRate = abs(redNorm-pixelNorm)
-            orangeRate = abs(orangeNorm-pixelNorm)
+            redRate = abs(pixelG-redG)
+            orangeRate = abs(pixelG-orangeG)
             if redRate > orangeRate:
                 returnColor = "o"
             else:
@@ -340,26 +392,64 @@ class CameraSensor:
                  32,33,34,39,-1,35,38,37,36,
                  40,41,42,47,-1,43,46,45,44]
         
+        lefts = 0
+        rights = 0
+        backs = 0
+        ups = 0
+        downs = 0
+        fronts = 0
         for i, val in enumerate(vals):
             if order[i] != -1:
                 final[order[i]] = val
-            
+                if val == 0:
+                    lefts += 1
+                elif val == 1:
+                    rights += 1
+                elif val == 2:
+                    backs += 1
+                elif val == 3:
+                    ups += 1
+                elif val == 4:
+                    downs += 1
+                elif val == 5:
+                    fronts += 1
+
+        print("lefts: {} \nrights: {} \nbacks: {} \nups: {} \ndowns: {} \nfronts: {}"\
+            .format(lefts, rights, backs, ups, downs, fronts))
+        
+        self.printColorAverages()
+        input("Stop here")
+        
+        if lefts != rights and rights != backs and \
+            backs != ups and ups != downs and \
+            downs != fronts and fronts != lefts:
+            input("Error!!")
+        
         return final
     
     def getValues(self, files):
         faceVals = []
         corePixels = {}
         coreColors = []
+        
+        sides_seen = set()
+        count = 1
         for file in files:
-            averages = self.averages(file)
-            faceVals += averages
-            corePixels[file[9]] = averages[4]
-            color = self.getColor(averages[4])
-            coreColors.append(color)
+            side = file[9]
+            
+            if side not in sides_seen:
+                print(side)
+                averages = self.averages(file)
+                faceVals += averages
+                corePixels[file[9]] = averages[4]
+                print("center color: {}".format(averages[4]))
+                color = self.getColor(averages[4])
+                coreColors.append(color)
+                sides_seen.add(side)
         
         print(corePixels)
         print(coreColors)
-        #input("Stop here")
+        input("stop here")
         self.updateColorOrientation(corePixels, coreColors)
         for i, val in enumerate(faceVals):
             key = self.getColor(val)

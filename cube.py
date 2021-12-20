@@ -1583,14 +1583,16 @@ class Cube:
     def simplifySolution(self):
         print(self.moves)
         before = self.moves
+        moves = before.split(" ").copy()
         while True:
-            moves = before.split(" ")
+            changed = False
+            newMoves = []
             for i in range(len(moves)-1):
                 curr = moves[i]
                 next = moves[i+1]
-                if len(curr) == 0 or len(next) == 0:
+                if len(curr) == 0 or len(next) == 0 or curr == ".":
                     continue
-                
+                toAdd = ""
                 if curr[0] == next[0]:
                     cNorm = curr[0]
                     cDouble = curr[0] + "2"
@@ -1601,39 +1603,45 @@ class Cube:
                 
                     if curr == cNorm:
                         if next == nDouble:
-                            moves[i] = ""
-                            moves[i+1] = cPrime
+                            toAdd = cPrime
                         elif next == nPrime:
-                            moves[i] = ""
-                            moves[i+1] = ""
+                            toAdd = "."
                         elif next == nNorm:
-                            moves[i] = ""
-                            moves[i+1] = cDouble
+                            toAdd = cDouble
                     elif curr == cDouble:
                         if next == nNorm:
-                            moves[i] = ""
-                            moves[i+1] = cPrime
+                            toAdd = cPrime
                         elif next == nPrime:
-                            moves[i] = ""
-                            moves[i+1] = cNorm
+                            toAdd = cNorm
                         elif next == nDouble:
-                            moves[i] = ""
-                            moves[i+1] = ""
+                            toAdd = "."
                     elif curr == cPrime:
                         if next == nNorm:
-                            moves[i] = ""
-                            moves[i+1] = ""
+                            toAdd = "."
                         elif next == nPrime:
-                            moves[i] = ""
-                            moves[i+1] = cDouble
+                            toAdd = cDouble
                         elif next == nDouble:
-                            moves[i] = ""
-                            moves[i+1] = cNorm
-            after = " ".join(moves)
-            if before == after:
+                            toAdd = cNorm
+                print(i, len(self.moves)-1)
+                if toAdd == "":
+                    newMoves.append(curr)
+                    if i == len(self.moves)-1:
+                        newMoves.append(next)
+                elif toAdd == ".":
+                    moves[i+1] = "."
+                    changed = True
+                else:
+                    print("{} {} -> {}".format(curr, next, toAdd))
+                    newMoves.append(toAdd)
+                    changed = True
+                    moves[i+1] = "."
+            print(newMoves)
+            moves = newMoves.copy()
+            if changed == False:
                 break
-            before = after
+        print("B: [{}]".format(self.moves))
         self.moves = " ".join(moves)
+        print("A: [{}]".format(self.moves))
         
     def solution(self):
         self.moves = ""
@@ -1641,7 +1649,7 @@ class Cube:
         self.solveLine()
         self.solveF2L()
         self.solveTop()
-        self.simplifySolution()
+        #self.simplifySolution()
         if self.moves[-1] == " ":
             self.moves = self.moves[:-1]
         return self.moves

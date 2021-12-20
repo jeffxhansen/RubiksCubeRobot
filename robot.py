@@ -225,7 +225,7 @@ class Robot:
 
     def acceptCube(self):
         self.defaultOpen()
-        input("Ready?")
+        input("Press Enter to start")
         self.defaultClose()
         time.sleep(SHORT)
 
@@ -520,7 +520,7 @@ class Robot:
         if close:
             self.defaultClose()
         #algorithm = "R U R' R U R' U R U R' R U' R' U' R U R'"
-        movements = algorithm.split()
+        movements = algorithm.split(" ")
         print(movements)
         
         for movement in movements:
@@ -561,8 +561,8 @@ class Robot:
     def referencePicture(self):
         self.camSensor.referencePicture()
         
-    def takePicture(self, fileName):
-        self.camSensor.takePicture(fileName)
+    def takePicture(self, fileName, brightness=0):
+        self.camSensor.takePicture(fileName, brightness)
         
     def takePictures(self):
         #self.picturePosition()
@@ -571,20 +571,27 @@ class Robot:
         sides = ["U", "L", "D", "F", "R", "B"]
         for i, movement in enumerate(movements):
             side = sides[i]
+            settings = [("./webcam/" + side + str(i) + ".jpg", i) for i in range(25,66,10)]
             fileName = "./webcam/" + side + ".jpg"
             self.picturePosition()
             #self.camSensor.referencePicture()
-            self.camSensor.takePicture(fileName)
+            for setting in settings:
+                self.camSensor.takePicture(setting[0], brightness=setting[1])
             c = False
             if movement == "x":
                 c = True
             self.parse_solution(movement, close=c)
+        
+        self.camSensor.lights.setBrightness(0)
             
         self.defaultClose()
             
     def getCubeVals(self):
         sides = ["L", "R", "B", "U", "D", "F"]
-        files = [str("./webcam/" + side + ".jpg") for side in sides]
+        files = []
+        for side in sides:
+            for i in range(35,56,5):
+                files.append(str("./webcam/" + side + str(i) + ".jpg"))
         return self.camSensor.getValues(files)
     
     def redOrangeTest(self):
