@@ -48,8 +48,8 @@ class CameraSensor:
         self.lights = Lights()
 
     def initPoints(self):
-        xShift = -24
-        yShift = 10
+        xShift = -16
+        yShift = 14
         startX = (self.camWidth // 2) - (self.cubeDim // 2) + xShift
         startY = (self.camHeight // 2) - (self.cubeDim // 2) + yShift
         endX = startX + self.cubeDim
@@ -362,11 +362,14 @@ class CameraSensor:
             self.oranges.append(pixel)
             self.updateOranges()
         '''
+        '''
         for t in similarities:
             print(t)
         print()
+        '''
         returnColor = colors[index]
-        self.updateColors(returnColor, pixel)
+        #self.updateColors(returnColor, pixel)
+        
         '''
         if returnColor == "r" or returnColor == "o":
             pixelG = pixel[1]
@@ -381,6 +384,8 @@ class CameraSensor:
                 returnColor = "r"
         '''
         #print(returnColor, end="\n\n")
+        with open("values.txt","a") as file:
+            file.write(f"{pixel[0]}, {pixel[1]}, {pixel[2]}, {returnColor}\n")
         return returnColor
     
     def reorderVals(self, vals):
@@ -418,7 +423,7 @@ class CameraSensor:
             .format(lefts, rights, backs, ups, downs, fronts))
         
         self.printColorAverages()
-        input("Stop here")
+        #input("Stop here")
         
         if lefts != rights and rights != backs and \
             backs != ups and ups != downs and \

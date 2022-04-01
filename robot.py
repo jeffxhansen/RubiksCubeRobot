@@ -63,6 +63,7 @@ class Motor:
         self.init = init
         self.end = end
         self.type = ""
+        self.lightRanges = range(10,61,10)
         if id < 4: 
             self.type = "G"
             self.name = self.type + str((id % 4) + 1)
@@ -571,7 +572,8 @@ class Robot:
         sides = ["U", "L", "D", "F", "R", "B"]
         for i, movement in enumerate(movements):
             side = sides[i]
-            settings = [("./webcam/" + side + str(i) + ".jpg", i) for i in range(25,66,10)]
+            settings = [("./webcam/" + side + str(i) + ".jpg", i)
+                        for i in self.lightRanges]
             fileName = "./webcam/" + side + ".jpg"
             self.picturePosition()
             #self.camSensor.referencePicture()
@@ -590,7 +592,7 @@ class Robot:
         sides = ["L", "R", "B", "U", "D", "F"]
         files = []
         for side in sides:
-            for i in range(35,56,5):
+            for i in self.lightRanges:
                 files.append(str("./webcam/" + side + str(i) + ".jpg"))
         return self.camSensor.getValues(files)
     

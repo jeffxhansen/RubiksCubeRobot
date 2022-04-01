@@ -1152,6 +1152,31 @@ def averageColorVals():
     print(red)
         
 
+
+def webcStream():
+    cam = CameraSensor()
+    cam.streamWebcamVideo()
+    
+def cubeTest():
+    cube = Cube()
+    cube.rotations(getScramble(15))
+    cube.solution()
+    
+def testPic():
+    #Robot().picturePosition()
+    cam = CameraSensor()
+    
+    cam.takePicture("webcam/testPic.png", brightness=20)
+    
+    
+def lightsTest():
+    
+    robot = Robot()
+    robot.camSensor.lights.setBrightness(100)
+    time.sleep(3)
+    robot.camSensor.lights.setBrightness(0)
+    
+    
 def run():
     robot = Robot()
     cube = Cube()
@@ -1163,32 +1188,17 @@ def run():
     print(cube)
     #robot.defaultOpen()
     #print(cube)
-    #robot.camSensor.printColorAverages()
+    robot.camSensor.printColorAverages()
     #robot.acceptCube()
     solution = cube.solution()
+    input("Solve cube?")
     robot.parse_solution(solution)
     robot.defaultOpen()
-
-def webcStream():
-    cam = CameraSensor()
-    cam.streamWebcamVideo()
-    
-def cubeTest():
-    cube = Cube()
-    cube.rotations(getScramble(15))
-    cube.solution()
-    
-    
-def lightsTest():
-    
-    robot = Robot()
-    robot.camSensor.lights.setBrightness(100)
-    time.sleep(3)
-    robot.camSensor.lights.setBrightness(0)
     
     
 #webcStream()
 run()
+#testPic()
 #lightsTest()
 #cubeTest()
 #findReferences()
