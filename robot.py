@@ -5,6 +5,9 @@ import time
 import maestro
 from cameraSensor import CameraSensor
 import numpy as np
+import cv2 as cv
+
+from numpy.linalg import norm
 
 """
 This section includes Constants that are used for the robot
@@ -30,9 +33,9 @@ G2_END = 4200   # gripper motor 2 clockwise-rotated position
 G3_END = 6850   # gripper motor 3 clockwise-rotated position
 G4_END = 3968   # gripper motor 4 clockwise-rotated position
 
-S1_INIT = 4300  # slider motor 1 closed position
+S1_INIT = 4400  # slider motor 1 closed position
 S2_INIT = 4300  # slider motor 2 closed position
-S3_INIT = 4000  # slider motor 3 closed position
+S3_INIT = 4900  # slider motor 3 closed position
 S4_INIT = 4300  # slider motor 4 closed position
 
 S1_END = 7000  # slider motor 1 open position
@@ -63,7 +66,6 @@ class Motor:
         self.init = init
         self.end = end
         self.type = ""
-        self.lightRanges = range(10,61,10)
         if id < 4: 
             self.type = "G"
             self.name = self.type + str((id % 4) + 1)
@@ -106,6 +108,7 @@ class Robot:
     def __init__(self):
         self.servo = maestro.Controller('/dev/ttyAMA0')
         # set each motor to a slow acceleration
+        self.lightRanges = range(20,71,10)
         for motor in self.motors:
             self.setAcceleration(motor, ACCEL_FAST)
             
@@ -615,10 +618,181 @@ class Robot:
                     oranges = np.append(oranges, [val], axis=0)
         print(np.average(reds, axis=0))
         print(np.average(oranges, axis=0))
-
-
         
+    def normalize(self, v):
+        return v / norm(v)
+        
+    def calibrateColors(self):
+        print("Please place cube in robot with:\n\tGreen on top\n\tWhite facing front\n\tYellow facing webcam")
+        self.acceptCube()
+        ranges = list(self.lightRanges)
+        files = ["./webcam/" + "B" + str(i) + ".jpg" for i in ranges]
+        
+        allFour = "U R D L"
+        self.parse_solution(allFour)
+        self.defaultClose()
+        self.picturePosition()
+        #("./webcam/" + side + str(i) + ".jpg", i)
+        
+        for i, f in enumerate(files):
+            self.takePicture(f, brightness=ranges[i])
+        
+        img = self.camSensor.avgImage(files)
+        cv.imwrite("./webcam/calib1.jpg", img)
+        avgs = self.camSensor.averages(img)
+        
+        greens = []
+        reds = []
+        yellows = []
+        blues = []
+        oranges = []
+        whites = []
+        colors = ["g", "r", "r", "g", "y", "b", "o", "o", "b"]
+        for i, a in enumerate(avgs):
+            
+            col = colors[i]
+            if col == "w":
+                whites.append(self.normalize(a))
+            elif col == "g":
+                greens.append(self.normalize(a))
+            elif col == "r":
+                reds.append(self.normalize(a))
+            elif col == "y":
+                yellows.append(self.normalize(a))
+            elif col == "o":
+                oranges.append(self.normalize(a))
+            elif col == "b":
+                blues.append(self.normalize(a))
+                
+        
+        self.defaultClose()
+        self.parse_solution("x")
+        self.defaultClose()
+        self.picturePosition()
+        
+        for i, f in enumerate(files):
+            self.takePicture(f, brightness=ranges[i])
+        
+        img = self.camSensor.avgImage(files)
+        cv.imwrite("./webcam/calib2.jpg", img)
+        avgs = self.camSensor.averages(img)
+        colors = ["w", "g", "r", "w", "g", "y", "o", "g", "y"]
+        for i, a in enumerate(avgs):
+            col = colors[i]
+            if col == "w":
+                whites.append(self.normalize(a))
+            elif col == "g":
+                greens.append(self.normalize(a))
+            elif col == "r":
+                reds.append(self.normalize(a))
+            elif col == "y":
+                yellows.append(self.normalize(a))
+            elif col == "o":
+                oranges.append(self.normalize(a))
+            elif col == "b":
+                blues.append(self.normalize(a))
+            
+        self.defaultClose()
+        self.parse_solution("x' L' D' R' U'")
+        self.defaultOpen()
+        
+        print("please do the checkerboard pattern and place with:\n\tGreen on top\n\tWhite facing front\n\tYellow facing webcam")
+        self.acceptCube()
+        
+        self.picturePosition()
+        #("./webcam/" + side + str(i) + ".jpg", i)
+
+        for i, f in enumerate(files):
+            self.takePicture(f, brightness=ranges[i])
+
+        img = self.camSensor.avgImage(files)
+        cv.imwrite("./webcam/calib1.jpg", img)
+        avgs = self.camSensor.averages(img)
+        
+        colors = ["y", "w", "y", "w", "y", "w", "y", "w", "y"]
+        for i, a in enumerate(avgs):
+            col = colors[i]
+            if col == "w":
+                whites.append(self.normalize(a))
+            elif col == "g":
+                greens.append(self.normalize(a))
+            elif col == "r":
+                reds.append(self.normalize(a))
+            elif col == "y":
+                yellows.append(self.normalize(a))
+            elif col == "o":
+                oranges.append(self.normalize(a))
+            elif col == "b":
+                blues.append(self.normalize(a))
+            
+        self.defaultClose()
+        self.parse_solution("y")
+        self.defaultClose()
+        self.picturePosition()
                             
-        
+        for i, f in enumerate(files):
+            self.takePicture(f, brightness=ranges[i])
 
+        img = self.camSensor.avgImage(files)
+        cv.imwrite("./webcam/calib1.jpg", img)
+        avgs = self.camSensor.averages(img)
+
+        colors = ["r", "o", "r", "o", "r", "o", "r", "o", "r"]
+            
+        for i, a in enumerate(avgs):
+            col = colors[i]
+            if col == "w":
+                whites.append(self.normalize(a))
+            elif col == "g":
+                greens.append(self.normalize(a))
+            elif col == "r":
+                reds.append(self.normalize(a))
+            elif col == "y":
+                yellows.append(self.normalize(a))
+            elif col == "o":
+                oranges.append(self.normalize(a))
+            elif col == "b":
+                blues.append(self.normalize(a))
+            
+        self.defaultClose()
+        self.parse_solution("x")
+        self.defaultClose()
+        self.picturePosition()
+        
+        for i, f in enumerate(files):
+            self.takePicture(f, brightness=ranges[i])
+
+        img = self.camSensor.avgImage(files)
+        cv.imwrite("./webcam/calib1.jpg", img)
+        avgs = self.camSensor.averages(img)
+
+        colors = ["g", "b", "g", "b", "g", "b", "g", "b", "g"]
+
+        for i, a in enumerate(avgs):
+            col = colors[i]
+            if col == "w":
+                whites.append(self.normalize(a))
+            elif col == "g":
+                greens.append(self.normalize(a))
+            elif col == "r":
+                reds.append(self.normalize(a))
+            elif col == "y":
+                yellows.append(self.normalize(a))
+            elif col == "o":
+                oranges.append(self.normalize(a))
+            elif col == "b":
+                blues.append(self.normalize(a))
+            
+        baseColors = ["r", "o", "y", "g", "b", "w"]
+        colorArrs = [reds, oranges, yellows, greens, blues, whites]
+        with open("./colors.txt", "w") as file:
+            for i, c in enumerate(baseColors):
+                print(c)
+                file.write(str(c) + "\n")
+                colorArrs[i] = np.mean(colorArrs[i], axis=0)
+                print(colorArrs[i])
+                file.write(str(colorArrs[i]) + "\n")
+                print(colorArrs[i]*255)
+            
+        self.defaultOpen()
 

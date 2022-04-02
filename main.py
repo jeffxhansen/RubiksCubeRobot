@@ -1163,10 +1163,14 @@ def cubeTest():
     cube.solution()
     
 def testPic():
-    #Robot().picturePosition()
+    robot = Robot()
+    robot.defaultOpen()
+    robot.defaultClose()
+    robot.picturePosition()
     cam = CameraSensor()
     
     cam.takePicture("webcam/testPic.png", brightness=20)
+    robot.defaultOpen()
     
     
 def lightsTest():
@@ -1195,10 +1199,29 @@ def run():
     robot.parse_solution(solution)
     robot.defaultOpen()
     
+def calibrateColors():
+    Robot().calibrateColors()
+    
+    
+    
+def recalibrate():
+    robot = Robot()
+    robot.defaultOpen()
+    robot.defaultClose()
+    robot.prepareHorizontal()
+    robot.openVertical()
+    input("Open?")
+    robot.defaultOpen()
+    
     
 #webcStream()
+
 run()
+#doesItActuallyWork()
+#recalibrate()
+#calibrateColors()
 #testPic()
+
 #lightsTest()
 #cubeTest()
 #findReferences()
