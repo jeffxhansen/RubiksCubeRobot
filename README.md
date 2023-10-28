@@ -8,10 +8,10 @@
 
 * **cameraSensor.py** This handles all of the computer vision and acts as a class inside of the Robot class. It uses OpenCV to take pictures, convert to numpy arrays, and perform the calculations for color recognition. I treat colors as 3 dimensional vectors, and I use cosine similarity for color classification
 
-* **maestro.py** This is a Github repo that I imported that is incorporated with the Pololu Maestro Servo controller. This translates the serial output from the raspberry pi to signals that the servos understand.
+* **maestro/maestro.py** This is a Github repo that I imported that is incorporated with the Pololu Maestro Servo controller. This translates the serial output from the raspberry pi to signals that the servos understand.
 
 * **main.py** the `run()` function actually runs the robot in this file. This file is large and generally just filled with lots of unit tests for different portions of the robot.
 
-* **ZBLL Files** These files house all of the 400+ algoriths used in the ZZ method to solve the last layer of the Rubik's Cube. I used the `imageProcessor.py` class to speed up the process by downloading images from the internet and converting to numeric strings, so the Rubik's cube robot can genearte a hash-map lookup table to find which algorithm will solve the last layer
+* **alogorithms/** These files house all of the 400+ algoriths used in the ZZ method to solve the last layer of the Rubik's Cube. I used the `imageProcessor.py` class to speed up the process by downloading images from the internet and converting to numeric strings, so the Rubik's cube robot can genearte a hash-map lookup table to find which algorithm will solve the last layer
 
-* **Misc** Lots of other files used to do unit tests, test out certain aspects of the code, and supllementary files that helped me formulate how to code this Rubik's Cube Robot
+* **quick_scripts/** Lots of other files used to do unit tests, test out certain aspects of the code, and supllementary files that helped me formulate how to code this Rubik's Cube Robot

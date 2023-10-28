@@ -216,13 +216,6 @@ class CameraSensor:
         rightArea = img[area[0][1]:area[1][1]+1, area[0][0]:area[1][0]+1]
         orangeAverage = np.average(np.average(rightArea, axis=1), axis=0)
         
-        '''
-        redAverage /= 255
-        redAverage /= norm(redAverage)
-        orangeAverage /= 255
-        orangeAverage /= norm(orangeAverage)
-        '''
-        
         self.coreColors[0] = redAverage
         self.coreColors[1] = orangeAverage
         capture.release()
@@ -314,51 +307,7 @@ class CameraSensor:
             averages.append(avgPixel)
 
         return averages
-    '''
-    def updateColors(self, color, pixel):
-        if color == "w":
-            print("White Updated:")
-            print(self.whites)
-            self.whites = np.append([self.whites], [pixel], axis=0)
-            self.whites = np.average(self.whites, axis=0)
-            print(self.whites, end="\n\n")
-            #self.coreColors[5] = self.whites
-        elif color == "r":
-            print("Red Updated:")
-            print(self.reds)
-            self.reds = np.append([self.reds], [pixel], axis=0)
-            self.reds = np.average(self.reds, axis=0)
-            print(self.reds, end="\n\n")
-            #self.coreColors[0] = self.reds
-        elif color == "o":
-            print("Orange Updated:")
-            print(self.oranges)
-            self.oranges = np.append([self.oranges], [pixel], axis=0)
-            self.oranges = np.average(self.oranges, axis=0)
-            print(self.oranges, end="\n\n")
-            #self.coreColors[1] = self.oranges
-        elif color == "y":
-            print("Yellow Updated:")
-            print(self.yellows)
-            self.yellows = np.append([self.yellows], [pixel], axis=0)
-            self.yellows = np.average(self.yellows, axis=0)
-            print(self.yellows, end="\n\n")
-            #self.coreColors[2] = self.yellows
-        elif color == "g":
-            print("Green Updated:")
-            print(self.greens)
-            self.greens = np.append([self.greens], [pixel], axis=0)
-            self.greens = np.average(self.greens, axis=0)
-            print(self.greens, end="\n\n")
-            #self.coreColors[3] = self.greens
-        elif color == "b":
-            print("Blue Updated:")
-            print(self.blues)
-            self.blues = np.append([self.blues], [pixel], axis=0)
-            self.blues = np.average(self.blues, axis=0)
-            print(self.blues, end="\n\n")
-            #self.coreColors[4] = self.blues
-    '''
+
     def printColorAverages(self):
         print("R: {}".format(self.reds[0]))
         print("R: {}".format(self.reds[0]*255))
@@ -382,26 +331,14 @@ class CameraSensor:
         index = 0
         similarities = []
         for i, c in enumerate(self.coreColors):
-            #sim_euc = self.euclidean_similarity(pixel_norm, c)
             sim_cos = self.cosine_similarity(pixel_norm, c)
-            #sim_sum = self.sum_similarity(pixel_norm, c)
-            #sim_dot = self.dot_product_similarity(pixel_norm, c)
-            #print("sim_euc: {}-{} is {} for {}".format(pixel*255, c*255, sim_euc, colors[i]))
-            #print("sim_cos: {}-{} is {} for {}".format(pixel*255, c*255, sim_cos, colors[i]))
-            #print("sim_sum: {}-{} is {} for {}".format(pixel*255, c*255, sim_sum, colors[i]))
-            #print("sim_dot: {}-{} is {} for {}".format(pixel*255, c*255, sim_dot, colors[i]))
+
             similarities.append(tuple([pixel_norm*255, c, sim_cos, colors[i]]))
             if sim_cos > max:
                 index = i
                 max = sim_cos
         
         self.color_updates[index].append(pixel_norm)
-        '''
-        if index == 1:
-            self.oranges.append(pixel)
-        elif index == 0:
-            self.reds.append(pixel)
-        '''
         
         for t in similarities:
             print("sim_cos: {}-{} is {} for {}".format(t[0], t[1], t[2], t[3]))
@@ -409,19 +346,6 @@ class CameraSensor:
         returnColor = colors[index]
         #self.updateColors(returnColor, pixel)
         
-        '''
-        if returnColor == "r" or returnColor == "o":
-            pixelG = pixel[1]
-            redG = self.coreColors[0][1]
-            orangeG = self.coreColors[1][1]
-            
-            redRate = abs(pixelG-redG)
-            orangeRate = abs(pixelG-orangeG)
-            if redRate > orangeRate:
-                returnColor = "o"
-            else:
-                returnColor = "r"
-        '''
         print(returnColor, end="\n\n")
         return returnColor
     
