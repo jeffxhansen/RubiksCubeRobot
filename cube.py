@@ -186,7 +186,7 @@ class Cube:
 
     def unfoldedCubeString(self):
         string = ""
-        file = open("unfoldedCubeKey.txt")
+        file = open("reference_information/unfoldedCubeKey.txt")
         content = file.readlines()
 
         SIDE_KEYWORDS = ["LL", "RR", "BB", "UU", "DD", "FF"]
@@ -1346,14 +1346,14 @@ class Cube:
         return newTopValues
 
     def getZBLLCase(self, topValues):
-        ZBLLCase = {"00100010000001011111": "ZBLL-T.txt",
-                    "00010100000001011111": "ZBLL-U.txt",
-                    "10000100000011011101": "ZBLL-L.txt",
-                    "10100010100001010101": "ZBLL-H.txt",
-                    "10100100010001010101": "ZBLL-Pi.txt",
-                    "10010010000001011101": "ZBLL-S.txt",
-                    "00100100100001010111": "ZBLL-AS.txt",
-                    "00000000000011111111": "PLL.txt"}
+        ZBLLCase = {"00100010000001011111": "algorithms/ZBLL-T.txt",
+                    "00010100000001011111": "algorithms/ZBLL-U.txt",
+                    "10000100000011011101": "algorithms/ZBLL-L.txt",
+                    "10100010100001010101": "algorithms/ZBLL-H.txt",
+                    "10100100010001010101": "algorithms/ZBLL-Pi.txt",
+                    "10010010000001011101": "algorithms/ZBLL-S.txt",
+                    "00100100100001010111": "algorithms/ZBLL-AS.txt",
+                    "00000000000011111111": "algorithms/PLL.txt"}
 
         rotations = 0
         change = False
