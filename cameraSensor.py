@@ -2,7 +2,7 @@ import cv2 as cv
 import numpy as np
 from numpy.linalg import norm
 from math import sqrt
-import pigpio
+from pigpio-master import pigpio
 from time import sleep
 from copy import deepcopy
 
@@ -94,7 +94,7 @@ class CameraSensor:
                            BLUE/norm(BLUE), WHITE/norm(WHITE)]
         '''
         
-        file = open("./colors.txt")
+        file = open("reference_information/colors.txt")
         content = [line.strip() for line in file.readlines()]
         self.coreColors = []
         for i in range(0, len(content), 2):
