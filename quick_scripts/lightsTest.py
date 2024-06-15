@@ -1,4 +1,4 @@
-from pigpio_master import pigpio
+import pigpio
 from time import sleep
 pi = pigpio.pi()
 

@@ -2,7 +2,7 @@ import cv2 as cv
 import numpy as np
 from numpy.linalg import norm
 from math import sqrt
-from pigpio_master import pigpio
+import pigpio
 from time import sleep
 from copy import deepcopy
 

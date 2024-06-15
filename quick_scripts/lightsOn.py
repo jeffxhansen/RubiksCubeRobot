@@ -4,7 +4,7 @@ import os
 x=[print(m) for m in sys.modules]
 print(os.getcwd())
 
-from pigpio_master import pigpio
+import pigpio
 
 x=[print(m) for m in sys.modules]
 print(os.getcwd())
