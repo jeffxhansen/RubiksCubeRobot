@@ -2,7 +2,7 @@
 import time
 
 #from serial.serialposix import PlatformSpecificBase
-import maestro
+import maestro.maestro as maestro
 from cameraSensor import CameraSensor
 import numpy as np
 import cv2 as cv
