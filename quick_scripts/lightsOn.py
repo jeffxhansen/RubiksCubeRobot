@@ -1,3 +1,3 @@
-from pigpio-master import pigpio
+from pigpio_master import pigpio
 pi = pigpio.pi()
 pi.set_PWM_dutycycle(4, 20)

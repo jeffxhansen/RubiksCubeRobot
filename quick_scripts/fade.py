@@ -49,7 +49,7 @@ import os
 import sys
 import termios
 import tty
-from pigpio-master import pigpio
+from pigpio_master import pigpio
 import time
 from thread import start_new_thread
 
