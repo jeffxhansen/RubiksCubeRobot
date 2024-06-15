@@ -78,7 +78,7 @@ class Motor:
             .format(self.type, self.id % 4+1, self.id, self.init, self.end)
             
     def __repr__(self):
-        return ("Motor({}, {}, {})"
+        return ("Motor({}, {}, {}, {})"
             .format(self.id, self.init, self.end, self.type))
 
 class Robot:
