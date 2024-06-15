@@ -14,5 +14,8 @@ git push
 # Remote git operations on the Raspberry Pi using sshpass to provide the password
 sshpass -p 'raspberry' ssh pi@raspberrypi.local << 'ENDSSH'
 cd RubiksCubeRobot
-touch gits_worked.txt
+git add --all
+git commit -m "pulling changes"
+git pull
+git push
 ENDSSH
