@@ -2,7 +2,7 @@
 import time
 
 #from serial.serialposix import PlatformSpecificBase
-import maestro
+import maestro.maestro as maestro
 from cameraSensor import CameraSensor
 import numpy as np
 import cv2 as cv
@@ -78,8 +78,8 @@ class Motor:
             .format(self.type, self.id % 4+1, self.id, self.init, self.end)
             
     def __repr__(self):
-        return "Motor({}, {}, {})"\
-            .format(self.id, self.init, self.end, self.type)
+        return ("Motor({}, {}, {}, {})"
+            .format(self.id, self.init, self.end, self.type))
 
 class Robot:
     
@@ -233,7 +233,7 @@ class Robot:
         self.defaultClose()
         time.sleep(SHORT)
 
-    def inDefaultPosition(self, motor):
+    '''def inDefaultPosition(self, motor):
         
         for m, i in enumerate(self.motors):
             if m == motor:
@@ -242,7 +242,7 @@ class Robot:
     
         print("   provided wrong input in isInDefaultPosition():robot.py 117")
         print("   argument: " + str(motor))
-        return False
+        return False'''
     
     def tightenHorizontal(self, extra=False):
         amount = 100

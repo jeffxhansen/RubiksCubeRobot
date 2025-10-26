@@ -94,7 +94,7 @@ class CameraSensor:
                            BLUE/norm(BLUE), WHITE/norm(WHITE)]
         '''
         
-        file = open("./colors.txt")
+        file = open("reference_information/colors.txt")
         content = [line.strip() for line in file.readlines()]
         self.coreColors = []
         for i in range(0, len(content), 2):
