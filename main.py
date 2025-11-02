@@ -1216,18 +1216,19 @@ def recalibrate():
     
 #webcStream()
 
-run()
-#doesItActuallyWork()
-#recalibrate()
-#calibrateColors()
-#testPic()
+if __name__ == "__main__":
+    run()
+    #doesItActuallyWork()
+    #recalibrate()
+    #calibrateColors()
+    #testPic()
 
-#lightsTest()
-#cubeTest()
-#findReferences()
-#averageColorVals()
-#testings()
-#takePics()
-#prepForWebcam()
-#doesItActuallyWork()
+    #lightsTest()
+    #cubeTest()
+    #findReferences()
+    #averageColorVals()
+    #testings()
+    #takePics()
+    #prepForWebcam()
+    #doesItActuallyWork()
 

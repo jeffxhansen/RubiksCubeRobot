@@ -1,4 +1,4 @@
-import cv2 as cv
+import cv2
 import numpy as np
 from numpy.linalg import norm
 from math import sqrt
@@ -29,7 +29,7 @@ class CameraSensor:
     SIDE_ORDER = ["L", "R", "B", "U", "D", "F"]
 
     def __init__(self):
-        capture = cv.VideoCapture(0)
+        capture = cv2.VideoCapture(0)
         ret, frame = capture.read()
         self.camHeight, self.camWidth, self.camColors = frame.shape
         capture.release()
@@ -150,44 +150,44 @@ class CameraSensor:
         print("After: ", self.coreColors)
 
     def streamWebcamVideo(self):
-        videoCaptureObject = cv.VideoCapture(1)
+        videoCaptureObject = cv2.VideoCapture(1)
         while(True):
             ret, frame = videoCaptureObject.read()
-            cv.imshow('Capturing Video', frame)
-            if(cv.waitKey(1) & 0xFF == ord('q')):
+            cv2.imshow('Capturing Video', frame)
+            if(cv2.waitKey(1) & 0xFF == ord('q')):
                 videoCaptureObject.release()
-                cv.destroyAllWindows()
+                cv2.destroyAllWindows()
 
     def printWebcamProps(self, capture=None):
         if capture == None:
-            capture = cv.VideoCapture(1)
+            capture = cv2.VideoCapture(1)
         print("CV_CAP_PROP_FRAME_WIDTH : '{}'".format(
-            capture.get(cv.CAP_PROP_FRAME_WIDTH)))
+            capture.get(cv2.CAP_PROP_FRAME_WIDTH)))
         print("CV_CAP_PROP_FRAME_HEIGHT : '{}'".format(
-            capture.get(cv.CAP_PROP_FRAME_HEIGHT)))
+            capture.get(cv2.CAP_PROP_FRAME_HEIGHT)))
         print("CAP_PROP_BRIGHTNESS : '{}'".format(
-            capture.get(cv.CAP_PROP_BRIGHTNESS)))
+            capture.get(cv2.CAP_PROP_BRIGHTNESS)))
         print("CAP_PROP_CONTRAST : '{}'".format(
-            capture.get(cv.CAP_PROP_CONTRAST)))
+            capture.get(cv2.CAP_PROP_CONTRAST)))
         print("CAP_PROP_SATURATION : '{}'".format(
-            capture.get(cv.CAP_PROP_SATURATION)))
+            capture.get(cv2.CAP_PROP_SATURATION)))
         print("CAP_PROP_EXPOSURE : '{}'".format(
-            capture.get(cv.CAP_PROP_EXPOSURE)))
-        print("CAP_PROP_HUE : '{}'".format(capture.get(cv.CAP_PROP_HUE)))
+            capture.get(cv2.CAP_PROP_EXPOSURE)))
+        print("CAP_PROP_HUE : '{}'".format(capture.get(cv2.CAP_PROP_HUE)))
         print("CAP_PROP_SHARPNESS : '{}'".format(
-            capture.get(cv.CAP_PROP_SHARPNESS)))
+            capture.get(cv2.CAP_PROP_SHARPNESS)))
         print("CAP_PROP_AUTO_EXPOSURE : '{}'".format(
-            capture.get(cv.CAP_PROP_AUTO_EXPOSURE)))
+            capture.get(cv2.CAP_PROP_AUTO_EXPOSURE)))
         print("CAP_PROP_TEMPERATURE : '{}'".format(
-            capture.get(cv.CAP_PROP_TEMPERATURE)))
-        print("CAP_PROP_ZOOM : '{}'".format(capture.get(cv.CAP_PROP_ZOOM)))
-        print("CAP_PROP_FOCUS : '{}'".format(capture.get(cv.CAP_PROP_FOCUS)))
+            capture.get(cv2.CAP_PROP_TEMPERATURE)))
+        print("CAP_PROP_ZOOM : '{}'".format(capture.get(cv2.CAP_PROP_ZOOM)))
+        print("CAP_PROP_FOCUS : '{}'".format(capture.get(cv2.CAP_PROP_FOCUS)))
         print("CAP_PROP_AUTOFOCUS : '{}'".format(
-            capture.get(cv.CAP_PROP_AUTOFOCUS)))
-        print("CAP_PROP_ZOOM : '{}'".format(capture.get(cv.CAP_PROP_ZOOM)))
+            capture.get(cv2.CAP_PROP_AUTOFOCUS)))
+        print("CAP_PROP_ZOOM : '{}'".format(capture.get(cv2.CAP_PROP_ZOOM)))
         
     def enhancePicture(self, img):
-        hsv = cv.cvtColor(img, cv.COLOR_BGR2HSV) # convert image to HSV color space
+        hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV) # convert image to HSV color space
         hsv = np.array(hsv, dtype = np.float64)
         hsv[:,:,0] = hsv[:,:,0]*1.25 # scale pixel values up for channel 0
         hsv[:,:,0][hsv[:,:,0]>255]  = 255
@@ -197,16 +197,16 @@ class CameraSensor:
         hsv[:,:,2][hsv[:,:,2]>255]  = 255
         hsv = np.array(hsv, dtype = np.uint8)
         # converting back to BGR used by OpenCV
-        img = cv.cvtColor(hsv, cv.COLOR_HSV2BGR)
+        img = cv2.cvtColor(hsv, cv2.COLOR_HSV2BGR)
         return img
     
     def convertToHSV(self, img):
-        hsv = cv.cvtColor(img, cv.COLOR_BGR2HSV) # convert image to HSV color space
+        hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV) # convert image to HSV color space
         hsv = np.array(hsv, dtype = np.float64)
         return hsv
     
     def referencePicture(self):
-        capture = cv.VideoCapture(0)
+        capture = cv2.VideoCapture(0)
         ret, img = capture.read()
         
         area = [(5, 150), (95, 210)]
@@ -225,33 +225,33 @@ class CameraSensor:
         if brightness != 0:
             self.lights.setBrightness(brightness)
         
-        capture = cv.VideoCapture(0)
+        capture = cv2.VideoCapture(0)
         ret, frame = capture.read()
         #frame = self.enhancePicture(frame)
-        cv.imwrite(name, frame)
+        cv2.imwrite(name, frame)
         self.largeBox(name)
         capture.release()
         
     def avgImage(self, files):
         imgs = []
         for f in files:
-            imgs.append(cv.imread(f))
+            imgs.append(cv2.imread(f))
         img = np.mean(imgs, axis=0).astype(np.uint8)
         return img
 
     def largeBox(self, name):
         color = (255, 50, 50)
-        edit = cv.imread(name, 1)
-        edit = cv.rectangle(edit, self.startPoint, self.endPoint, color, 2)
-        cv.imwrite(name[:-4] + "Edit" + name[-4:], edit)
+        edit = cv2.imread(name, 1)
+        edit = cv2.rectangle(edit, self.startPoint, self.endPoint, color, 2)
+        cv2.imwrite(name[:-4] + "Edit" + name[-4:], edit)
 
     def smallBoxes(self, name, edit):
-        orig = cv.imread(name, 1)
+        orig = cv2.imread(name, 1)
 
         color = (50, 255, 50)
         for c in self.cubies:
-            orig = cv.rectangle(orig, c[0], c[1], color, 1)
-        cv.imwrite(edit, orig)
+            orig = cv2.rectangle(orig, c[0], c[1], color, 1)
+        cv2.imwrite(edit, orig)
 
     def drawBoxes(self):
         original = "./webcam/ToEdit.jpg"
@@ -287,7 +287,7 @@ class CameraSensor:
         return averages
 
     def averages1(self, file: str):
-        img = cv.imread(file, 1)
+        img = cv2.imread(file, 1)
         #img = self.convertToHSV(img)
         averages = []
         for area in self.cubies:
@@ -298,7 +298,7 @@ class CameraSensor:
         return averages
     
     def averages2(self, file: str):
-        img = cv.imread(file, 1)
+        img = cv2.imread(file, 1)
         #img = self.convertToHSV(img)
         averages = []
         for area in self.cubies:
